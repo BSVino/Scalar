@@ -1,0 +1,32 @@
+{
+	"build_systems":
+	[
+		{
+			"encoding": "cp850",
+			"file_regex": "^(.*?)\\(([0-9]+),?([0-9]+)?\\) (.*)",
+			"name": "Build",
+			"osx":
+			{
+				"cmd":
+				[
+					"$project_path/build.sh"
+				],
+				"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$"
+			},
+			"windows":
+			{
+				"cmd":
+				[
+					"$project_path\\test.bat"
+				]
+			},
+			"working_dir": "${project_path}"
+		}
+	],
+	"folders":
+	[
+		{
+			"path": "/Users/vino/Documents/git/VisualVectors"
+		}
+	]
+}
