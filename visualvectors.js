@@ -21,6 +21,13 @@ function visualvectors_init(v)
 	animate();
 }
 
+function arrangeVVector(k)
+{
+	var v = run_vectors[k];
+	v.vector.position.copy(v.v0);
+	v.vector_head.position.copy(v.v0);
+}
+
 function init() {
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
@@ -58,6 +65,8 @@ function init() {
 
 	parentTransform = new THREE.Object3D();
 
+	var handle_geometry = new THREE.SphereGeometry(.2, 4, 4);
+
 	var vector_geometry = new THREE.CylinderGeometry(.03, .03, 1, 16);
 	vector_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	vector_geometry.translate(0.5, 0, 0);
@@ -66,17 +75,23 @@ function init() {
 	head_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	head_geometry.translate(1, 0, 0);
 
+	/*var handle_material = new THREE.MeshBasicMaterial();
+	handle_material.opacity = 0.01;
+	handle_material.transparent = true;
+	handle_material.visible = false;*/
+
 	run_vectors = [];
 
 	for ( var i = 0; i < init_vectors.length; i ++ ) {
 		var arrow_material = new THREE.MeshBasicMaterial( { color: init_vectors[i].color } );
 
 		var vector = new THREE.Mesh( vector_geometry, arrow_material );
-
 		var vector_head = new THREE.Mesh( head_geometry, arrow_material );
+		//var vector_base = new THREE.Mesh( handle_geometry );
 
 		vector.position.copy(init_vectors[i].v0);
 		vector_head.position.copy(init_vectors[i].v0);
+		//vector_base.position.copy(init_vectors[i].v0);
 
 		vector.userData.vid = i;
 		vector.userData.meshtype = "body";
@@ -85,9 +100,16 @@ function init() {
 
 		parentTransform.add( vector );
 		parentTransform.add( vector_head );
+		//parentTransform.add( vector_base );
 
-		run_vectors[i] = {vector, vector_head};
+		run_vectors[i] = {
+			v0: init_vectors[i].v0,
+			v1: init_vectors[i].v1,
+			vector, vector_head
+		};
 	}
+
+	console.log(run_vectors);
 
 	scene.add( parentTransform );
 
@@ -133,7 +155,10 @@ function onDocumentMouseMove( event ) {
 		var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
 		var world_position = fromScreenPosition(screen_position, camera)
 		world_position.sub(drag_object_offset);
-		drag_object.position.copy(world_position);
+
+		run_vectors[drag_object].v0 = world_position;
+
+		arrangeVVector(drag_object);
 	}
 }
 
@@ -148,10 +173,10 @@ function onDocumentMouseDown( event ) {
 		return;
 
 	dragging = true;
-	drag_object = intersects[0].object;
+	drag_object = intersects[0].object.userData.vid;
 	drag_object_handle.copy(intersects[0].point);
 	drag_object_offset.copy(drag_object_handle);
-	drag_object_offset.sub(drag_object.position);
+	drag_object_offset.sub(intersects[0].object.position);
 }
 
 function onDocumentMouseUp( event ) {
@@ -184,18 +209,11 @@ function render() {
 	var intersects = raycaster.intersectObjects( parentTransform.children, true);
 
 	if ( intersects.length > 0 ) {
-		//if ( currentIntersected !== undefined )
-		//	currentIntersected.material.linewidth = 2;
-
 		currentIntersected = intersects[ 0 ].object;
-		//currentIntersected.material.linewidth = 15;
 
 		sphereInter.visible = true;
 		sphereInter.position.copy( intersects[ 0 ].point );
 	} else {
-		//if ( currentIntersected !== undefined )
-		//	currentIntersected.material.linewidth = 2;
-
 		currentIntersected = undefined;
 
 		sphereInter.visible = false;
