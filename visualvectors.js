@@ -7,7 +7,7 @@ var radius = 100;
 var currentIntersected;
 
 var dragging = false;
-var drag_object, drag_object_offset, drag_object_handle;
+var drag_object, drag_object_type, drag_object_offset, drag_object_handle;
 drag_object_offset = new THREE.Vector3();
 drag_object_handle = new THREE.Vector3();
 
@@ -166,15 +166,27 @@ function onDocumentMouseMove( event ) {
 
 	if (dragging)
 	{
-		var original_screen_position = toScreenPosition(drag_object_handle, camera);
-		var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
-		var world_position = fromScreenPosition(screen_position, camera)
-		world_position.sub(drag_object_offset);
+		if (drag_object_type == "body")
+		{
+			var original_screen_position = toScreenPosition(drag_object_handle, camera);
+			var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
+			var world_position = fromScreenPosition(screen_position, camera)
+			world_position.sub(drag_object_offset);
 
-		var difference = VVector3(world_position);
-		difference.sub(run_vectors[drag_object].v0);
-		run_vectors[drag_object].v0 = world_position;
-		run_vectors[drag_object].v1.add(difference);
+			var difference = VVector3(world_position);
+			difference.sub(run_vectors[drag_object].v0);
+			run_vectors[drag_object].v0 = world_position;
+			run_vectors[drag_object].v1.add(difference);
+		}
+		else if (drag_object_type == "head")
+		{
+			var original_screen_position = toScreenPosition(drag_object_handle, camera);
+			var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
+			var world_position = fromScreenPosition(screen_position, camera)
+			world_position.sub(drag_object_offset);
+
+			run_vectors[drag_object].v1 = world_position;
+		}
 
 		arrangeVVector(drag_object);
 	}
@@ -192,9 +204,20 @@ function onDocumentMouseDown( event ) {
 
 	dragging = true;
 	drag_object = intersects[0].object.userData.vid;
-	drag_object_handle.copy(intersects[0].point);
-	drag_object_offset.copy(drag_object_handle);
-	drag_object_offset.sub(run_vectors[drag_object].vector.position);
+	drag_object_type = intersects[0].object.userData.meshtype;
+
+	if (drag_object_type == "body")
+	{
+		drag_object_handle.copy(intersects[0].point);
+		drag_object_offset.copy(drag_object_handle);
+		drag_object_offset.sub(run_vectors[drag_object].vector.position);
+	}
+	else if (drag_object_type == "head")
+	{
+		drag_object_handle.copy(intersects[0].point);
+		drag_object_offset.copy(drag_object_handle);
+		drag_object_offset.sub(intersects[0].object.position);
+	}
 }
 
 function onDocumentMouseUp( event ) {
