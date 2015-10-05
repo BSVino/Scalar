@@ -25,7 +25,24 @@ function arrangeVVector(k)
 {
 	var v = run_vectors[k];
 	v.vector.position.copy(v.v0);
-	v.vector_head.position.copy(v.v0);
+	v.vector_head.position.copy(v.v1);
+
+	var direction = new THREE.Vector3();
+	direction.copy(v.v1);
+	direction.sub(v.v0);
+	var vector_length = direction.length();
+	direction.normalize();
+
+	v.vector.scale.setX(vector_length - 0.25);
+
+	v.vector.quaternion.setFromUnitVectors(
+		new THREE.Vector3(1, 0, 0),
+		direction
+	);
+	v.vector_head.quaternion.setFromUnitVectors(
+		new THREE.Vector3(1, 0, 0),
+		direction
+	);
 }
 
 function init() {
@@ -73,7 +90,7 @@ function init() {
 
 	var head_geometry = new THREE.CylinderGeometry(.08, 0, 0.25, 16);
 	head_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
-	head_geometry.translate(1, 0, 0);
+	head_geometry.translate(-0.125, 0, 0);
 
 	/*var handle_material = new THREE.MeshBasicMaterial();
 	handle_material.opacity = 0.01;
@@ -90,7 +107,7 @@ function init() {
 		//var vector_base = new THREE.Mesh( handle_geometry );
 
 		vector.position.copy(init_vectors[i].v0);
-		vector_head.position.copy(init_vectors[i].v0);
+		vector_head.position.copy(init_vectors[i].v1);
 		//vector_base.position.copy(init_vectors[i].v0);
 
 		vector.userData.vid = i;
@@ -107,9 +124,9 @@ function init() {
 			v1: init_vectors[i].v1,
 			vector, vector_head
 		};
-	}
 
-	console.log(run_vectors);
+		arrangeVVector(i);
+	}
 
 	scene.add( parentTransform );
 
@@ -132,8 +149,6 @@ function init() {
 	document.addEventListener( 'mouseup', onDocumentMouseUp, false );
 
 	window.addEventListener( 'resize', onWindowResize, false );
-
-	//parentTransform.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), new THREE.Vector3(Math.sqrt(2)/2, Math.sqrt(2)/2, 0));
 }
 
 function onWindowResize() {
@@ -156,7 +171,10 @@ function onDocumentMouseMove( event ) {
 		var world_position = fromScreenPosition(screen_position, camera)
 		world_position.sub(drag_object_offset);
 
+		var difference = VVector3(world_position);
+		difference.sub(run_vectors[drag_object].v0);
 		run_vectors[drag_object].v0 = world_position;
+		run_vectors[drag_object].v1.add(difference);
 
 		arrangeVVector(drag_object);
 	}
@@ -176,7 +194,7 @@ function onDocumentMouseDown( event ) {
 	drag_object = intersects[0].object.userData.vid;
 	drag_object_handle.copy(intersects[0].point);
 	drag_object_offset.copy(drag_object_handle);
-	drag_object_offset.sub(intersects[0].object.position);
+	drag_object_offset.sub(run_vectors[drag_object].vector.position);
 }
 
 function onDocumentMouseUp( event ) {

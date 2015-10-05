@@ -3,9 +3,16 @@ function VVector(color, v0, v1)
 	return {color, v0, v1};
 }
 
-function VVector3(x, y, z)
+function VVector3v(x, y, z)
 {
-	return {x, y, z};
+	return new THREE.Vector3(x, y, z);
+}
+
+function VVector3(v)
+{
+	var r = new THREE.Vector3();
+	r.copy(v);
+	return r;
 }
 
 // http://stackoverflow.com/a/27410603
