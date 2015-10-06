@@ -26,6 +26,9 @@ function arrangeVVector(k)
 	var v = run_vectors[k];
 	v.vector.position.copy(v.v0);
 	v.vector_head.position.copy(v.v1);
+	v.vector_handle.position.copy(v.v0);
+	v.vector_base.position.copy(v.v0);
+	v.vector_head_handle.position.copy(v.v1);
 
 	var direction = new THREE.Vector3();
 	direction.copy(v.v1);
@@ -34,12 +37,18 @@ function arrangeVVector(k)
 	direction.normalize();
 
 	v.vector.scale.setX(vector_length - 0.25);
-
 	v.vector.quaternion.setFromUnitVectors(
 		new THREE.Vector3(1, 0, 0),
 		direction
 	);
+
 	v.vector_head.quaternion.setFromUnitVectors(
+		new THREE.Vector3(1, 0, 0),
+		direction
+	);
+
+	v.vector_handle.scale.setX(vector_length - 0.25);
+	v.vector_handle.quaternion.setFromUnitVectors(
 		new THREE.Vector3(1, 0, 0),
 		direction
 	);
@@ -82,20 +91,24 @@ function init() {
 
 	parentTransform = new THREE.Object3D();
 
-	var handle_geometry = new THREE.SphereGeometry(.2, 4, 4);
-
 	var vector_geometry = new THREE.CylinderGeometry(.03, .03, 1, 16);
 	vector_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	vector_geometry.translate(0.5, 0, 0);
+
+	var handle_geometry = new THREE.SphereGeometry(.15, 4, 4);
+	var head_handle_geometry = new THREE.SphereGeometry(.15, 4, 4);
+	head_handle_geometry.translate(-0.15, 0, 0);
+
+	var vector_handle_geometry = new THREE.CylinderGeometry(.08, .08, 1, 16);
+	vector_handle_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
+	vector_handle_geometry.translate(0.5, 0, 0);
 
 	var head_geometry = new THREE.CylinderGeometry(.08, 0, 0.25, 16);
 	head_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	head_geometry.translate(-0.125, 0, 0);
 
-	/*var handle_material = new THREE.MeshBasicMaterial();
-	handle_material.opacity = 0.01;
-	handle_material.transparent = true;
-	handle_material.visible = false;*/
+	var handle_material = new THREE.MeshBasicMaterial();
+	handle_material.visible = false;
 
 	run_vectors = [];
 
@@ -103,26 +116,32 @@ function init() {
 		var arrow_material = new THREE.MeshBasicMaterial( { color: init_vectors[i].color } );
 
 		var vector = new THREE.Mesh( vector_geometry, arrow_material );
+		var vector_handle = new THREE.Mesh( vector_handle_geometry, handle_material );
 		var vector_head = new THREE.Mesh( head_geometry, arrow_material );
-		//var vector_base = new THREE.Mesh( handle_geometry );
-
-		vector.position.copy(init_vectors[i].v0);
-		vector_head.position.copy(init_vectors[i].v1);
-		//vector_base.position.copy(init_vectors[i].v0);
+		var vector_head_handle = new THREE.Mesh( handle_geometry, handle_material );
+		var vector_base = new THREE.Mesh( handle_geometry, handle_material );
 
 		vector.userData.vid = i;
 		vector.userData.meshtype = "body";
+		vector_handle.userData.vid = i;
+		vector_handle.userData.meshtype = "body";
 		vector_head.userData.vid = i;
 		vector_head.userData.meshtype = "head";
+		vector_head_handle.userData.vid = i;
+		vector_head_handle.userData.meshtype = "head";
+		vector_base.userData.vid = i;
+		vector_base.userData.meshtype = "base";
 
 		parentTransform.add( vector );
+		parentTransform.add( vector_handle );
 		parentTransform.add( vector_head );
-		//parentTransform.add( vector_base );
+		parentTransform.add( vector_head_handle );
+		parentTransform.add( vector_base );
 
 		run_vectors[i] = {
 			v0: init_vectors[i].v0,
 			v1: init_vectors[i].v1,
-			vector, vector_head
+			vector, vector_head, vector_handle, vector_head_handle, vector_base
 		};
 
 		arrangeVVector(i);
@@ -166,27 +185,22 @@ function onDocumentMouseMove( event ) {
 
 	if (dragging)
 	{
+		var original_screen_position = toScreenPosition(drag_object_handle, camera);
+		var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
+		var world_position = fromScreenPosition(screen_position, camera)
+		world_position.sub(drag_object_offset);
+
 		if (drag_object_type == "body")
 		{
-			var original_screen_position = toScreenPosition(drag_object_handle, camera);
-			var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
-			var world_position = fromScreenPosition(screen_position, camera)
-			world_position.sub(drag_object_offset);
-
 			var difference = VVector3(world_position);
 			difference.sub(run_vectors[drag_object].v0);
 			run_vectors[drag_object].v0 = world_position;
 			run_vectors[drag_object].v1.add(difference);
 		}
 		else if (drag_object_type == "head")
-		{
-			var original_screen_position = toScreenPosition(drag_object_handle, camera);
-			var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
-			var world_position = fromScreenPosition(screen_position, camera)
-			world_position.sub(drag_object_offset);
-
 			run_vectors[drag_object].v1 = world_position;
-		}
+		else if (drag_object_type == "base")
+			run_vectors[drag_object].v0 = world_position;
 
 		arrangeVVector(drag_object);
 	}
@@ -205,19 +219,9 @@ function onDocumentMouseDown( event ) {
 	dragging = true;
 	drag_object = intersects[0].object.userData.vid;
 	drag_object_type = intersects[0].object.userData.meshtype;
-
-	if (drag_object_type == "body")
-	{
-		drag_object_handle.copy(intersects[0].point);
-		drag_object_offset.copy(drag_object_handle);
-		drag_object_offset.sub(run_vectors[drag_object].vector.position);
-	}
-	else if (drag_object_type == "head")
-	{
-		drag_object_handle.copy(intersects[0].point);
-		drag_object_offset.copy(drag_object_handle);
-		drag_object_offset.sub(intersects[0].object.position);
-	}
+	drag_object_handle.copy(intersects[0].point);
+	drag_object_offset.copy(drag_object_handle);
+	drag_object_offset.sub(intersects[0].object.position);
 }
 
 function onDocumentMouseUp( event ) {
