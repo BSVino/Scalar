@@ -9,7 +9,7 @@ var currentIntersected;
 var clock = new THREE.Clock();
 var dt;
 
-var FADE_SPEED = 2;
+var TRANSITION_SPEED = 2;
 
 var dragging = false;
 var drag_object, drag_object_type, drag_object_offset, drag_object_handle;
@@ -37,7 +37,7 @@ function visualvectors_init()
 		},
 		{
 			vectors: [
-				VVector("green", 0x0D690F, VVector3v(0, 1, 0), VVector3v(1, 0, 0)),
+				VVector("green", 0x0D690F, VVector3v(-1, 1, 0), VVector3v(1, 0, 0)),
 				VVector("blue", 0x0D0D69, VVector3v(0, 0, 0), VVector3v(-1, -1, 0))
 			]
 		}
@@ -90,14 +90,19 @@ var vector_handle_geometry;
 var head_geometry;
 var handle_material;
 
+function array_swap_pop(array, index)
+{
+	array[index] = array[array.length-1];
+	array.pop();
+}
+
 function remove_raycast_object(object)
 {
 	for (var k = 0; k < raycast_objects.length; k++)
 	{
 		if (object == raycast_objects[k])
 		{
-			raycast_objects[k] = raycast_objects[raycast_objects.length-1];
-			raycast_objects.pop();
+			array_swap_pop(raycast_objects, k);
 			return;
 		}
 	}
@@ -126,7 +131,20 @@ function page_setup(page)
 	{
 		var vname = init_vectors[i].name;
 
-		if (!(vname in run_vectors))
+		if (vname in run_vectors)
+		{
+			run_vectors[vname].transitions.push(VTransition("length",
+				TV3_Distance(run_vectors[vname].v0, run_vectors[vname].v1),
+				TV3_Distance(init_vectors[i].v0, init_vectors[i].v1),
+				clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+				));
+			run_vectors[vname].transitions.push(VTransition("center",
+				TV3_Center(run_vectors[vname].v0, run_vectors[vname].v1),
+				TV3_Center(init_vectors[i].v0, init_vectors[i].v1),
+				clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+				));
+		}
+		else
 		{
 			var arrow_material = new THREE.MeshBasicMaterial( { color: init_vectors[i].color } );
 
@@ -159,6 +177,7 @@ function page_setup(page)
 			parentTransform.add( vector_base );
 
 			run_vectors[vname] = {};
+			run_vectors[vname].transitions = [];
 			run_vectors[vname].vector = vector;
 			run_vectors[vname].vector_head = vector_head;
 			run_vectors[vname].vector_handle = vector_handle;
@@ -169,13 +188,14 @@ function page_setup(page)
 			run_vectors[vname].vector.material.opacity = 0;
 		}
 
+		run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
+		run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
+
+		run_vectors[vname].kill = false;
+
 		raycast_objects.push(run_vectors[vname].vector_handle);
 		raycast_objects.push(run_vectors[vname].vector_base);
 		raycast_objects.push(run_vectors[vname].vector_head_handle);
-
-		run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
-		run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
-		run_vectors[vname].kill = false;
 
 		arrangeVVector(init_vectors[i].name);
 	}
@@ -441,13 +461,13 @@ function render() {
 	}
 
 	// Handle animations
-	for (var v in run_vectors)
+	for (var k in run_vectors)
 	{
-		var vector = run_vectors[v];
+		var vector = run_vectors[k];
 		if (vector.kill)
 		{
 			vector.vector.material.transparent = true;
-			vector.vector.material.opacity -= FADE_SPEED*dt;
+			vector.vector.material.opacity -= TRANSITION_SPEED*dt;
 
 			if (vector.vector.material.opacity <= 0)
 			{
@@ -457,18 +477,92 @@ function render() {
 				parentTransform.remove(vector.vector_handle);
 				parentTransform.remove(vector.vector_base);
 
-				delete run_vectors[v];
+				delete run_vectors[k]; // TODO: Can I do this in a loop over run_vectors?
+				continue;
 			}
 		}
 		else
 		{
 			if (vector.vector.material.transparent)
 			{
-				vector.vector.material.opacity += FADE_SPEED*dt;
+				vector.vector.material.opacity += TRANSITION_SPEED*dt;
 				if (vector.vector.material.opacity >= 1)
 					vector.vector.material.transparent = false;
 			}
 		}
+
+		var arrange = false;
+
+		for (var j = 0; j < vector.transitions.length; j++)
+		{
+			var transition = vector.transitions[j];
+			var lerp = RemapVal(clock.getElapsedTime(), transition.start_time, transition.end_time, 0, 1);
+
+			if (lerp >= 1)
+			{
+				array_swap_pop(vector.transitions, j);
+				j--;
+				continue;
+			}
+
+			if (transition.type == "length")
+			{
+				var new_length = RemapVal(lerp, 0, 1, transition.start_value, transition.end_value);
+
+				var v = VVector3(vector.v1);
+				v.sub(vector.v0);
+
+				var center = VVector3(v);
+				center.multiplyScalar(0.5);
+				center.add(vector.v0);
+
+				v.normalize();
+				v.multiplyScalar(new_length);
+
+				var new_v0 = VVector3(v);
+				new_v0.multiplyScalar(-0.5);
+				new_v0.add(center);
+
+				var new_v1 = VVector3(v);
+				new_v1.multiplyScalar(0.5);
+				new_v1.add(center);
+
+				vector.v0 = new_v0;
+				vector.v1 = new_v1;
+
+				arrange = true;
+			}
+			else if (transition.type == "center")
+			{
+				var center_path = VVector3(transition.end_value);
+				center_path.sub(transition.start_value);
+				center_path.multiplyScalar(lerp);
+				center_path.add(transition.start_value);
+
+				var v = VVector3(vector.v1);
+				v.sub(vector.v0);
+
+				var new_v0 = VVector3(v);
+				new_v0.multiplyScalar(-0.5);
+				new_v0.add(center_path);
+
+				var new_v1 = VVector3(v);
+				new_v1.multiplyScalar(0.5);
+				new_v1.add(center_path);
+
+				vector.v0 = new_v0;
+				vector.v1 = new_v1;
+
+				arrange = true;
+			}
+			else
+			{
+				console.error("Unknown transition type");
+			}
+		}
+
+		if (arrange)
+			arrangeVVector(k);
 	}
 
 	if (grid_fade < 1)
