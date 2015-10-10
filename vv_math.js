@@ -1,6 +1,6 @@
-function VVector(color, v0, v1)
+function VVector(name, color, v0, v1)
 {
-	return {color, v0, v1};
+	return {name, color, v0, v1};
 }
 
 function VVector3v(x, y, z)
