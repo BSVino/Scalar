@@ -16,6 +16,10 @@ var drag_object, drag_object_type, drag_object_offset, drag_object_handle;
 drag_object_offset = new THREE.Vector3();
 drag_object_handle = new THREE.Vector3();
 
+var grid_fade = 0;
+var grid;
+var grid_strong;
+
 var pages;
 var current_page;
 var init_vectors;
@@ -213,6 +217,52 @@ function init() {
 	//camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
 
 	scene = new THREE.Scene();
+
+	var GRID_MAX = 5;
+
+	var grid_geometry = new THREE.Geometry();
+
+	for (var k = -GRID_MAX+1; k < GRID_MAX; k++)
+	{
+		if (k == 0)
+			continue;
+
+		grid_geometry.vertices.push(
+			new THREE.Vector3( k, -GRID_MAX, 0 ),
+			new THREE.Vector3( k, GRID_MAX, 0 ),
+			new THREE.Vector3( -GRID_MAX, k, 0 ),
+			new THREE.Vector3( GRID_MAX, k, 0 )
+		);
+	}
+
+	grid_geometry.computeBoundingSphere();
+
+	var grid_material = new THREE.MeshBasicMaterial( { color: 0xe6d5c1 } );
+	grid = new THREE.LineSegments(grid_geometry, grid_material);
+	scene.add(grid);
+
+	var grid_strong_geometry = new THREE.Geometry();
+
+	grid_strong_geometry.vertices.push(
+		new THREE.Vector3( -5, -5, 0 ),
+		new THREE.Vector3( -5, 5, 0 ),
+		new THREE.Vector3( 5, -5, 0 ),
+		new THREE.Vector3( 5, 5, 0 ),
+		new THREE.Vector3( -5, -5, 0 ),
+		new THREE.Vector3( 5, -5, 0 ),
+		new THREE.Vector3( -5, 5, 0 ),
+		new THREE.Vector3( 5, 5, 0 ),
+		new THREE.Vector3( 0, -5, 0 ),
+		new THREE.Vector3( 0, 5, 0 ),
+		new THREE.Vector3( -5, 0, 0 ),
+		new THREE.Vector3( 5, 0, 0 )
+	);
+
+	grid_strong_geometry.computeBoundingSphere();
+
+	var grid_strong_material = new THREE.MeshBasicMaterial( { color: 0xc3b5a5 } );
+	grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
+	scene.add(grid_strong);
 
 	var geometry = new THREE.SphereGeometry( 0.1, 16, 12 );
 	var background_material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
@@ -419,6 +469,19 @@ function render() {
 					vector.vector.material.transparent = false;
 			}
 		}
+	}
+
+	if (grid_fade < 1)
+	{
+		grid_fade += dt;
+		grid.material.opacity = grid_strong.material.opacity = grid_fade;
+		grid.material.transparent = grid_strong.material.transparent = true;
+	}
+	else
+	{
+		grid_fade = 1;
+		grid.material.opacity = grid_strong.material.opacity = grid_fade;
+		grid.material.transparent = grid_strong.material.transparent = false;
 	}
 
 	renderer.render( scene, camera );
