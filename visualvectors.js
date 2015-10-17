@@ -31,13 +31,13 @@ function visualvectors_init()
 	pages = [
 		{
 			vectors: [
-				VVector("green", 0x0D690F, VVector3v(0, 0, 0), VVector3v(1, 1, 0)),
+				VVector("green", 0x0D690F, VVector3v(0, 0, 0), VVector3v(0, -4, 0)),
 				VVector("red", 0x690D0D, VVector3v(0, 1, 0), VVector3v(1, 1, 0))
 			]
 		},
 		{
 			vectors: [
-				VVector("green", 0x0D690F, VVector3v(-1, 1, 0), VVector3v(1, 0, 0)),
+				VVector("green", 0x0D690F, VVector3v(-1, 1, 0), VVector3v(0, 0, 0)),
 				VVector("blue", 0x0D0D69, VVector3v(0, 0, 0), VVector3v(-1, -1, 0))
 			]
 		}
@@ -118,13 +118,13 @@ function page_setup(page)
 
 	for (var name in run_vectors)
 	{
-		run_vectors[name].kill = true;
 		if (!run_vectors[name].kill)
 		{
 			remove_raycast_object(run_vectors[name].vector_handle);
 			remove_raycast_object(run_vectors[name].vector_head_handle);
 			remove_raycast_object(run_vectors[name].vector_base);
 		}
+		run_vectors[name].kill = true;
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
@@ -133,16 +133,34 @@ function page_setup(page)
 
 		if (vname in run_vectors)
 		{
-			run_vectors[vname].transitions.push(VTransition("length",
-				TV3_Distance(run_vectors[vname].v0, run_vectors[vname].v1),
-				TV3_Distance(init_vectors[i].v0, init_vectors[i].v1),
-				clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
-				));
-			run_vectors[vname].transitions.push(VTransition("center",
-				TV3_Center(run_vectors[vname].v0, run_vectors[vname].v1),
-				TV3_Center(init_vectors[i].v0, init_vectors[i].v1),
-				clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
-				));
+			run_vectors[vname].transitions = [];
+
+			{
+				var d0 = TV3_Distance(run_vectors[vname].v0, run_vectors[vname].v1);
+				var d1 = TV3_Distance(init_vectors[i].v0, init_vectors[i].v1);
+				if (Math.abs(d0 - d1) > 0.00001)
+					run_vectors[vname].transitions.push(VTransition("length", d0, d1,
+						clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+						));
+			}
+			{
+				var v0 = TV3_Center(run_vectors[vname].v0, run_vectors[vname].v1);
+				var v1 = TV3_Center(init_vectors[i].v0, init_vectors[i].v1);
+				if (VVector3(v0).sub(v1).length() > 0.00001)
+					run_vectors[vname].transitions.push(VTransition("center", v0, v1,
+						clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+						));
+			}
+			{
+				var q0 = TV3_Direction(run_vectors[vname].v0, run_vectors[vname].v1);
+				var q1 = TV3_Direction(init_vectors[i].v0, init_vectors[i].v1);
+				var v0 = VVector3v(1, 0, 0).applyQuaternion(q0);
+				var v1 = VVector3v(1, 0, 0).applyQuaternion(q1);
+				if (v0.dot(v1) < 0.9999)
+					run_vectors[vname].transitions.push(VTransition("direction", q0, q1,
+						clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+						));
+			}
 		}
 		else
 		{
@@ -233,8 +251,8 @@ function init() {
 	var height = window.innerHeight;
 	var ratio = height/width;
 	var size = 10;
-	camera = new THREE.OrthographicCamera( -size, size, size*ratio, -size*ratio, -1, 10000 );
-	//camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+	//camera = new THREE.OrthographicCamera( -size, size, size*ratio, -size*ratio, -1, 10000 );
+	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 
 	scene = new THREE.Scene();
 
@@ -433,6 +451,79 @@ function animate() {
 	stats.update();
 }
 
+function vector_transition(vector, transition, lerp)
+{
+	if (transition.type == "length")
+	{
+		var new_length = RemapVal(lerp, 0, 1, transition.start_value, transition.end_value);
+
+		var v = VVector3(vector.v1);
+		v.sub(vector.v0);
+
+		var center = VVector3(v);
+		center.multiplyScalar(0.5);
+		center.add(vector.v0);
+
+		v.normalize();
+		v.multiplyScalar(new_length);
+
+		var new_v0 = VVector3(v);
+		new_v0.multiplyScalar(-0.5);
+		new_v0.add(center);
+
+		var new_v1 = VVector3(v);
+		new_v1.multiplyScalar(0.5);
+		new_v1.add(center);
+
+		vector.v0 = new_v0;
+		vector.v1 = new_v1;
+	}
+	else if (transition.type == "center")
+	{
+		var center_path = VVector3(transition.end_value);
+		center_path.sub(transition.start_value);
+		center_path.multiplyScalar(lerp);
+		center_path.add(transition.start_value);
+
+		var v = VVector3(vector.v1);
+		v.sub(vector.v0);
+
+		var new_v0 = VVector3(v);
+		new_v0.multiplyScalar(-0.5);
+		new_v0.add(center_path);
+
+		var new_v1 = VVector3(v);
+		new_v1.multiplyScalar(0.5);
+		new_v1.add(center_path);
+
+		vector.v0 = new_v0;
+		vector.v1 = new_v1;
+	}
+	else if (transition.type == "direction")
+	{
+		var new_direction = new THREE.Quaternion();
+		THREE.Quaternion.slerp(transition.start_value, transition.end_value, new_direction, lerp);
+
+		var center = TV3_Center(vector.v0, vector.v1);
+		var length = TV3_Distance(vector.v0, vector.v1);
+
+		var new_v = VVector3v(1, 0, 0);
+		new_v.applyQuaternion(new_direction);
+		new_v.multiplyScalar(length/2);
+
+		vector.v0 = VVector3(new_v);
+		vector.v0.multiplyScalar(-1);
+		vector.v0.add(center);
+
+		vector.v1 = VVector3(new_v);
+		vector.v1.add(center);
+	}
+	else
+	{
+		console.error("Unknown transition type");
+	}
+}
+
 function render() {
 	dt = clock.getDelta();
 
@@ -500,65 +591,15 @@ function render() {
 
 			if (lerp >= 1)
 			{
+				arrange = true;
+				vector_transition(vector, transition, 1);
 				array_swap_pop(vector.transitions, j);
 				j--;
 				continue;
 			}
 
-			if (transition.type == "length")
-			{
-				var new_length = RemapVal(lerp, 0, 1, transition.start_value, transition.end_value);
-
-				var v = VVector3(vector.v1);
-				v.sub(vector.v0);
-
-				var center = VVector3(v);
-				center.multiplyScalar(0.5);
-				center.add(vector.v0);
-
-				v.normalize();
-				v.multiplyScalar(new_length);
-
-				var new_v0 = VVector3(v);
-				new_v0.multiplyScalar(-0.5);
-				new_v0.add(center);
-
-				var new_v1 = VVector3(v);
-				new_v1.multiplyScalar(0.5);
-				new_v1.add(center);
-
-				vector.v0 = new_v0;
-				vector.v1 = new_v1;
-
-				arrange = true;
-			}
-			else if (transition.type == "center")
-			{
-				var center_path = VVector3(transition.end_value);
-				center_path.sub(transition.start_value);
-				center_path.multiplyScalar(lerp);
-				center_path.add(transition.start_value);
-
-				var v = VVector3(vector.v1);
-				v.sub(vector.v0);
-
-				var new_v0 = VVector3(v);
-				new_v0.multiplyScalar(-0.5);
-				new_v0.add(center_path);
-
-				var new_v1 = VVector3(v);
-				new_v1.multiplyScalar(0.5);
-				new_v1.add(center_path);
-
-				vector.v0 = new_v0;
-				vector.v1 = new_v1;
-
-				arrange = true;
-			}
-			else
-			{
-				console.error("Unknown transition type");
-			}
+			vector_transition(vector, transition, lerp);
+			arrange = true;
 		}
 
 		if (arrange)
