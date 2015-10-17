@@ -428,12 +428,18 @@ function onDocumentMouseUp( event ) {
 function onDocumentKeyDown( event ) {
 	switch (event.keyCode)
 	{
+	case 13: // enter
+	case 32: // space bar
+	case 34: // page down
+	case 39: // right arrow
 	case 40: // down arrow
 		event.preventDefault();
 
 		page_advance();
 		break;
 
+	case 33: // page up
+	case 37: // left arrow
 	case 38: // up arrow
 		event.preventDefault();
 
