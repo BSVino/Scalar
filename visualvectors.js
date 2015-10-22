@@ -31,14 +31,27 @@ function visualvectors_init()
 	pages = [
 		{
 			vectors: [
-				VVector("green", 0x0D690F, VVector3v(0, 0, 0), VVector3v(0, -4, 0)),
-				VVector("red", 0x690D0D, VVector3v(0, 1, 0), VVector3v(1, 1, 0))
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					length: true,
+					angle: true
+				}),
 			]
 		},
 		{
 			vectors: [
-				VVector("green", 0x0D690F, VVector3v(-1, 1, 0), VVector3v(0, 0, 0)),
-				VVector("blue", 0x0D0D69, VVector3v(0, 0, 0), VVector3v(-1, -1, 0))
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0)}),
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, -4, 0)}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 1, 0), v1: VVector3v(1, 1, 0)})
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 1, 0), v1: VVector3v(0, 0, 0)}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, -1, 0)})
 			]
 		}
 	];
@@ -90,6 +103,15 @@ var vector_handle_geometry;
 var head_geometry;
 var handle_material;
 
+var length_text_attr = {
+	size: 60,
+	height: 0,
+	curveSegments: 3,
+	font: 'droid sans',
+	weight: 'normal',
+	bevelEnabled: false
+};
+
 function array_swap_pop(array, index)
 {
 	array[index] = array[array.length-1];
@@ -125,6 +147,12 @@ function page_setup(page)
 			remove_raycast_object(run_vectors[name].vector_base);
 		}
 		run_vectors[name].kill = true;
+
+		if (run_vectors[name].length_label)
+		{
+			parentTransform.remove(run_vectors[name].length_label);
+			run_vectors[name].length_label = null;
+		}
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
@@ -204,6 +232,23 @@ function page_setup(page)
 
 			run_vectors[vname].vector.material.transparent = true;
 			run_vectors[vname].vector.material.opacity = 0;
+
+		}
+
+		if ("length" in init_vectors[i])
+		{
+			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			var text_geometry = new THREE.TextGeometry("Length", length_text_attr);
+
+			text_geometry.computeBoundingBox();
+
+			var scale = 0.005;
+
+			run_vectors[vname].length_label = new THREE.Mesh( text_geometry, text_material );
+			run_vectors[vname].length_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(run_vectors[vname].length_label);
+
+			run_vectors[vname].length_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].length_label.scale.x;
 		}
 
 		run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
@@ -273,8 +318,6 @@ function init() {
 		);
 	}
 
-	grid_geometry.computeBoundingSphere();
-
 	var grid_material = new THREE.MeshBasicMaterial( { color: 0xe6d5c1 } );
 	grid = new THREE.LineSegments(grid_geometry, grid_material);
 	scene.add(grid);
@@ -295,8 +338,6 @@ function init() {
 		new THREE.Vector3( -5, 0, 0 ),
 		new THREE.Vector3( 5, 0, 0 )
 	);
-
-	grid_strong_geometry.computeBoundingSphere();
 
 	var grid_strong_material = new THREE.MeshBasicMaterial( { color: 0xc3b5a5 } );
 	grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
@@ -561,6 +602,25 @@ function render() {
 	for (var k in run_vectors)
 	{
 		var vector = run_vectors[k];
+
+		if (vector.length_label != null)
+		{
+			var scale = VVector3v(1, -0.1, 0).multiplyScalar(vector.length_label.text_size + 2);
+			vector.length_label.position.copy(
+				VVector3(vector.v1)
+					.sub(VVector3(vector.v0))
+					.multiplyScalar(0.5)
+					.add(vector.v0)
+					.sub(scale)
+			);
+
+			var new_length = VVector3(vector.v1).sub(vector.v0).length();
+
+			if (vector.old_length == null || vector.old_length != new_length)
+				vector.length_label.geometry = new THREE.TextGeometry("length: " + new_length.toFixed(2), length_text_attr);
+		}
+		vector.old_length = VVector3(vector.v1).sub(vector.v0).length();
+
 		if (vector.kill)
 		{
 			vector.vector.material.transparent = true;

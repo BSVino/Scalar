@@ -1,6 +1,18 @@
-function VVector(name, color, v0, v1)
+function VVector(parms)
 {
-	return {name, color, v0, v1};
+	if (!("name" in parms))
+		console.error("VVector with no name");
+
+	if (!("color" in parms))
+		console.error("VVector with no name");
+
+	if (!("v0" in parms))
+		console.error("VVector with no name");
+
+	if (!("v1" in parms))
+		console.error("VVector with no name");
+
+	return parms;
 }
 
 function VVector3v(x, y, z)
