@@ -31,6 +31,11 @@ function visualvectors_init()
 	pages = [
 		{
 			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0)}),
+			]
+		},
+		{
+			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					length: true,
 					angle: true
@@ -112,6 +117,15 @@ var length_text_attr = {
 	bevelEnabled: false
 };
 
+var angle_text_attr = {
+	size: 60,
+	height: 0,
+	curveSegments: 3,
+	font: 'droid sans',
+	weight: 'normal',
+	bevelEnabled: false
+};
+
 function array_swap_pop(array, index)
 {
 	array[index] = array[array.length-1];
@@ -152,6 +166,12 @@ function page_setup(page)
 		{
 			parentTransform.remove(run_vectors[name].length_label);
 			run_vectors[name].length_label = null;
+		}
+
+		if (run_vectors[name].angle_label)
+		{
+			parentTransform.remove(run_vectors[name].angle_label);
+			run_vectors[name].angle_label = null;
 		}
 	}
 
@@ -251,6 +271,22 @@ function page_setup(page)
 			run_vectors[vname].length_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].length_label.scale.x;
 		}
 
+		if ("angle" in init_vectors[i])
+		{
+			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			var text_geometry = new THREE.TextGeometry("Angle", angle_text_attr);
+
+			text_geometry.computeBoundingBox();
+
+			var scale = 0.005;
+
+			run_vectors[vname].angle_label = new THREE.Mesh( text_geometry, text_material );
+			run_vectors[vname].angle_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(run_vectors[vname].angle_label);
+
+			run_vectors[vname].angle_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].angle_label.scale.x;
+		}
+
 		run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
 		run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
 
@@ -261,6 +297,12 @@ function page_setup(page)
 		raycast_objects.push(run_vectors[vname].vector_head_handle);
 
 		arrangeVVector(init_vectors[i].name);
+
+		run_vectors[vname].old_length = 0;
+		update_length_label(run_vectors[vname]);
+
+		run_vectors[vname].old_angle = -1;
+		update_angle_label(run_vectors[vname]);
 	}
 }
 
@@ -571,6 +613,52 @@ function vector_transition(vector, transition, lerp)
 	}
 }
 
+function update_length_label(vector)
+{
+	if (vector.length_label == undefined || vector.length_label == null)
+		return;
+
+	var scale = VVector3v(1, -0.1, -0.1).multiplyScalar(vector.length_label.text_size + 2);
+	vector.length_label.position.copy(
+		VVector3(vector.v1)
+			.sub(VVector3(vector.v0))
+			.multiplyScalar(0.5)
+			.add(vector.v0)
+			.sub(scale)
+	);
+
+	var new_length = VVector3(vector.v1).sub(vector.v0).length();
+
+	if (vector.old_length == null || vector.old_length != new_length)
+		vector.length_label.geometry = new THREE.TextGeometry("length: " + new_length.toFixed(2), length_text_attr);
+
+	vector.old_length = new_length;
+}
+
+function update_angle_label(vector)
+{
+	if (vector.angle_label == undefined || vector.angle_label == null)
+		return;
+
+	var scale = VVector3v(0, 0, -0.1);
+	vector.angle_label.position.copy(
+		VVector3(vector.v1)
+			.sub(vector.v0)
+			.normalize()
+			.add(VVector3v(1, 0, 0))
+			.normalize()
+			.add(vector.v0)
+			.sub(scale)
+	);
+
+	var new_angle = Math.acos(VVector3(vector.v1).sub(vector.v0).normalize().dot(VVector3v(1, 0, 0))) * 180 / Math.PI;
+
+	if (vector.old_angle == null || vector.old_angle != new_angle)
+		vector.angle_label.geometry = new THREE.TextGeometry("angle: " + new_angle.toFixed(2) + "o", length_text_attr);
+
+	vector.old_angle = new_angle;
+}
+
 function render() {
 	dt = clock.getDelta();
 
@@ -603,23 +691,8 @@ function render() {
 	{
 		var vector = run_vectors[k];
 
-		if (vector.length_label != null)
-		{
-			var scale = VVector3v(1, -0.1, 0).multiplyScalar(vector.length_label.text_size + 2);
-			vector.length_label.position.copy(
-				VVector3(vector.v1)
-					.sub(VVector3(vector.v0))
-					.multiplyScalar(0.5)
-					.add(vector.v0)
-					.sub(scale)
-			);
-
-			var new_length = VVector3(vector.v1).sub(vector.v0).length();
-
-			if (vector.old_length == null || vector.old_length != new_length)
-				vector.length_label.geometry = new THREE.TextGeometry("length: " + new_length.toFixed(2), length_text_attr);
-		}
-		vector.old_length = VVector3(vector.v1).sub(vector.v0).length();
+		update_length_label(vector);
+		update_angle_label(vector);
 
 		if (vector.kill)
 		{
