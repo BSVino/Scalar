@@ -39,7 +39,8 @@ function visualvectors_init()
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					length: true,
-					angle: true
+					angle: true,
+					notransition: true
 				}),
 			]
 		},
@@ -48,11 +49,6 @@ function visualvectors_init()
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true
 				}),
-			]
-		},
-		{
-			vectors: [
-				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0)}),
 			]
 		},
 		{
@@ -211,33 +207,36 @@ function page_setup(page)
 
 		if (vname in run_vectors)
 		{
-			run_vectors[vname].transitions = [];
+			if (!("notransition" in init_vectors[i]))
+			{
+				run_vectors[vname].transitions = [];
 
-			{
-				var d0 = TV3_Distance(run_vectors[vname].v0, run_vectors[vname].v1);
-				var d1 = TV3_Distance(init_vectors[i].v0, init_vectors[i].v1);
-				if (Math.abs(d0 - d1) > 0.00001)
-					run_vectors[vname].transitions.push(VTransition("length", d0, d1,
-						clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
-						));
-			}
-			{
-				var v0 = TV3_Center(run_vectors[vname].v0, run_vectors[vname].v1);
-				var v1 = TV3_Center(init_vectors[i].v0, init_vectors[i].v1);
-				if (VVector3(v0).sub(v1).length() > 0.00001)
-					run_vectors[vname].transitions.push(VTransition("center", v0, v1,
-						clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
-						));
-			}
-			{
-				var q0 = TV3_Direction(run_vectors[vname].v0, run_vectors[vname].v1);
-				var q1 = TV3_Direction(init_vectors[i].v0, init_vectors[i].v1);
-				var v0 = VVector3v(1, 0, 0).applyQuaternion(q0);
-				var v1 = VVector3v(1, 0, 0).applyQuaternion(q1);
-				if (v0.dot(v1) < 0.9999)
-					run_vectors[vname].transitions.push(VTransition("direction", q0, q1,
-						clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
-						));
+				{
+					var d0 = TV3_Distance(run_vectors[vname].v0, run_vectors[vname].v1);
+					var d1 = TV3_Distance(init_vectors[i].v0, init_vectors[i].v1);
+					if (Math.abs(d0 - d1) > 0.00001)
+						run_vectors[vname].transitions.push(VTransition("length", d0, d1,
+							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+							));
+				}
+				{
+					var v0 = TV3_Center(run_vectors[vname].v0, run_vectors[vname].v1);
+					var v1 = TV3_Center(init_vectors[i].v0, init_vectors[i].v1);
+					if (VVector3(v0).sub(v1).length() > 0.00001)
+						run_vectors[vname].transitions.push(VTransition("center", v0, v1,
+							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+							));
+				}
+				{
+					var q0 = TV3_Direction(run_vectors[vname].v0, run_vectors[vname].v1);
+					var q1 = TV3_Direction(init_vectors[i].v0, init_vectors[i].v1);
+					var v0 = VVector3v(1, 0, 0).applyQuaternion(q0);
+					var v1 = VVector3v(1, 0, 0).applyQuaternion(q1);
+					if (v0.dot(v1) < 0.9999)
+						run_vectors[vname].transitions.push(VTransition("direction", q0, q1,
+							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
+							));
+				}
 			}
 		}
 		else
@@ -348,8 +347,11 @@ function page_setup(page)
 			parentTransform.add(run_vectors[vname].angle_xaxis);
 		}
 
-		run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
-		run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
+		if (!("notransition" in init_vectors[i]))
+		{
+			run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
+			run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
+		}
 
 		run_vectors[vname].kill = false;
 
