@@ -81,6 +81,24 @@ function visualvectors_init()
 				})
 			]
 		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					notransition: true,
+					fixbase: "green"
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true,
+					fixhead: "red"
+				})
+			],
+
+			info_div: "c = a.add(b)"
+		},
 	];
 	init();
 	animate();
@@ -175,6 +193,11 @@ function page_setup(page)
 	current_page = page;
 
 	init_vectors = pages[page].vectors;
+
+	if ("info_div" in pages[page])
+		info_div.innerHTML = pages[page].info_div;
+	else
+		info_div.innerHTML = "";
 
 	for (var name in run_vectors)
 	{
@@ -330,6 +353,7 @@ function page_setup(page)
 		}
 
 		run_vectors[vname].fixbase = init_vectors[i].fixbase;
+		run_vectors[vname].fixhead = init_vectors[i].fixhead;
 
 		if ("length" in init_vectors[i])
 		{
@@ -441,17 +465,22 @@ function page_advance()
 	page_setup(current_page+1);
 }
 
+var info_div;
+
 function init() {
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
 
 	var info = document.createElement( 'div' );
 	info.style.position = 'absolute';
-	info.style.top = '10px';
+	info.style.bottom = '20px';
 	info.style.width = '100%';
 	info.style.textAlign = 'center';
-	//info.innerHTML = '<a href="http://threejs.org" target="_blank">three.js</a> webgl - interactive lines';
+	info.style.fontSize = "24px";
+	info.innerHTML = '';
 	container.appendChild( info );
+
+	info_div = info;
 
 	var width = window.innerWidth;
 	var height = window.innerHeight;
@@ -969,6 +998,17 @@ function render() {
 
 			vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
 			vector.v0.copy(base_vector.v1);
+
+			arrange = true;
+		}
+
+		if (vector.fixhead)
+		{
+			var head_vector = run_vectors[vector.fixhead];
+			if (!head_vector)
+				console.error("Couldn't find head vector: " + vector.fixhead);
+
+			vector.v1.copy(head_vector.v1);
 
 			arrange = true;
 		}
