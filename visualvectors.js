@@ -96,6 +96,26 @@ function visualvectors_init()
 					fixhead: "red"
 				})
 			],
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					label: "b",
+					notransition: true,
+					fixbase: "green"
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					notransition: true,
+					fixhead: "red"
+				})
+			],
 
 			info_div: "c = a.add(b)"
 		},
@@ -244,6 +264,12 @@ function page_setup(page)
 			parentTransform.remove(run_vectors[name].tail_coord_label);
 			run_vectors[name].tail_coord_label = null;
 		}
+
+		if (run_vectors[name].name_label)
+		{
+			parentTransform.remove(run_vectors[name].name_label);
+			run_vectors[name].name_label = null;
+		}
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
@@ -331,10 +357,10 @@ function page_setup(page)
 			run_vectors[vname].vector.material.opacity = 0;
 		}
 
-		if (fixorigin)
+		run_vectors[vname].fixorigin = fixorigin;
+
+		if (fixorigin || "fixbase" in init_vectors[i])
 		{
-			run_vectors[vname].fixorigin = true;
-			
 			run_vectors[vname].vector.userData.meshtype = "head_offset";
 			run_vectors[vname].vector_handle.userData.meshtype = "head_offset";
 			run_vectors[vname].vector_head.userData.meshtype = "head";
@@ -343,8 +369,6 @@ function page_setup(page)
 		}
 		else
 		{
-			run_vectors[vname].fixorigin = false;
-
 			run_vectors[vname].vector.userData.meshtype = "body";
 			run_vectors[vname].vector_handle.userData.meshtype = "body";
 			run_vectors[vname].vector_head.userData.meshtype = "head";
@@ -421,6 +445,22 @@ function page_setup(page)
 			run_vectors[vname].tail_coord_label.scale.copy(VVector3v(scale, scale, scale));
 			parentTransform.add(run_vectors[vname].tail_coord_label);
 			run_vectors[vname].tail_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].tail_coord_label.scale.x;
+		}
+
+		if ("label" in init_vectors[i])
+		{
+			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			var text_geometry = new THREE.TextGeometry(init_vectors[i].label, length_text_attr);
+
+			text_geometry.computeBoundingBox();
+
+			var scale = 0.005;
+
+			run_vectors[vname].name_label = new THREE.Mesh( text_geometry, text_material );
+			run_vectors[vname].name_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(run_vectors[vname].name_label);
+
+			run_vectors[vname].name_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].name_label.scale.x;
 		}
 
 		if (!("notransition" in init_vectors[i]))
@@ -954,6 +994,19 @@ function render() {
 		update_length_label(vector);
 		update_angle_label(vector);
 		update_coords_label(vector);
+
+		if (vector.name_label != undefined && vector.name_label != null)
+		{
+			var scale = VVector3v(1, 0, 0).multiplyScalar(vector.name_label.text_size);
+			vector.name_label.position.copy(
+				VVector3(vector.v1)
+					.sub(VVector3(vector.v0))
+					.multiplyScalar(0.5)
+					.add(vector.v0)
+					.sub(scale)
+					.add(VVector3v(-0.2, 0.2, 0))
+			);
+		}
 
 		if (vector.kill)
 		{
