@@ -12,9 +12,10 @@ var dt;
 var TRANSITION_SPEED = 2;
 
 var dragging = false;
-var drag_object, drag_object_type, drag_object_offset, drag_object_handle;
-drag_object_offset = new THREE.Vector3();
-drag_object_handle = new THREE.Vector3();
+var drag_object, drag_object_type;
+var drag_object_offset = new THREE.Vector3();
+var drag_object_handle = new THREE.Vector3();
+var drag_object_v1 = new THREE.Vector3();
 
 var grid_fade = 0;
 var grid;
@@ -39,6 +40,13 @@ function visualvectors_init()
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					length: true,
 					angle: true
+				}),
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
 				}),
 			]
 		},
@@ -143,7 +151,9 @@ function remove_raycast_object(object)
 		}
 	}
 
-	console.error("Couldn't find raycast object " + object.name + " to remove");
+	console.error("Couldn't find raycast object to remove:");
+	console.log(object);
+	console.log(raycast_objects);
 }
 
 function page_setup(page)
@@ -173,11 +183,31 @@ function page_setup(page)
 			parentTransform.remove(run_vectors[name].angle_label);
 			run_vectors[name].angle_label = null;
 		}
+
+		if (run_vectors[name].angle_circle)
+		{
+			parentTransform.remove(run_vectors[name].angle_circle);
+			run_vectors[name].angle_circle = null;
+		}
+
+		if (run_vectors[name].angle_xaxis)
+		{
+			parentTransform.remove(run_vectors[name].angle_xaxis);
+			run_vectors[name].angle_xaxis = null;
+		}
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
 	{
 		var vname = init_vectors[i].name;
+
+		var fixorigin = false;
+
+		if ("fixorigin" in init_vectors[i] && init_vectors[i].fixorigin)
+			fixorigin = true;
+
+		if (fixorigin)
+			init_vectors[i].v0 = VVector3v(0, 0, 0);
 
 		if (vname in run_vectors)
 		{
@@ -222,19 +252,14 @@ function page_setup(page)
 
 			vector.userData.vid = i;
 			vector.userData.vname = vname;
-			vector.userData.meshtype = "body";
 			vector_handle.userData.vid = i;
 			vector_handle.userData.vname = vname;
-			vector_handle.userData.meshtype = "body";
 			vector_head.userData.vid = i;
 			vector_head.userData.vname = vname;
-			vector_head.userData.meshtype = "head";
 			vector_head_handle.userData.vid = i;
 			vector_head_handle.userData.vname = vname;
-			vector_head_handle.userData.meshtype = "head";
 			vector_base.userData.vid = i;
 			vector_base.userData.vname = vname;
-			vector_base.userData.meshtype = "base";
 
 			parentTransform.add( vector );
 			parentTransform.add( vector_handle );
@@ -252,7 +277,27 @@ function page_setup(page)
 
 			run_vectors[vname].vector.material.transparent = true;
 			run_vectors[vname].vector.material.opacity = 0;
+		}
 
+		if (fixorigin)
+		{
+			run_vectors[vname].fixorigin = true;
+			
+			run_vectors[vname].vector.userData.meshtype = "head_offset";
+			run_vectors[vname].vector_handle.userData.meshtype = "head_offset";
+			run_vectors[vname].vector_head.userData.meshtype = "head";
+			run_vectors[vname].vector_head_handle.userData.meshtype = "head";
+			run_vectors[vname].vector_base.userData.meshtype = "head_offset";
+		}
+		else
+		{
+			run_vectors[vname].fixorigin = false;
+
+			run_vectors[vname].vector.userData.meshtype = "body";
+			run_vectors[vname].vector_handle.userData.meshtype = "body";
+			run_vectors[vname].vector_head.userData.meshtype = "head";
+			run_vectors[vname].vector_head_handle.userData.meshtype = "head";
+			run_vectors[vname].vector_base.userData.meshtype = "base";
 		}
 
 		if ("length" in init_vectors[i])
@@ -285,6 +330,22 @@ function page_setup(page)
 			parentTransform.add(run_vectors[vname].angle_label);
 
 			run_vectors[vname].angle_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].angle_label.scale.x;
+
+			var circle_geometry = new THREE.RingGeometry(1, 5, 32);
+			run_vectors[vname].angle_circle = new THREE.Mesh(circle_geometry, text_material);
+			parentTransform.add(run_vectors[vname].angle_circle);
+
+			var xaxis_geometry = new THREE.Geometry();
+
+			for (var k = 0; k < 2; k += 0.2)
+				xaxis_geometry.vertices.push(
+					new THREE.Vector3( k, 0, 0 ),
+					new THREE.Vector3( k+0.08, 0, 0 )
+				);
+
+			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+			run_vectors[vname].angle_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
+			parentTransform.add(run_vectors[vname].angle_xaxis);
 		}
 
 		run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
@@ -292,8 +353,8 @@ function page_setup(page)
 
 		run_vectors[vname].kill = false;
 
-		raycast_objects.push(run_vectors[vname].vector_handle);
 		raycast_objects.push(run_vectors[vname].vector_base);
+		raycast_objects.push(run_vectors[vname].vector_handle);
 		raycast_objects.push(run_vectors[vname].vector_head_handle);
 
 		arrangeVVector(init_vectors[i].name);
@@ -362,6 +423,7 @@ function init() {
 
 	var grid_material = new THREE.MeshBasicMaterial( { color: 0xe6d5c1 } );
 	grid = new THREE.LineSegments(grid_geometry, grid_material);
+	grid.position.copy(VVector3v(0, 0, -0.1));
 	scene.add(grid);
 
 	var grid_strong_geometry = new THREE.Geometry();
@@ -383,6 +445,7 @@ function init() {
 
 	var grid_strong_material = new THREE.MeshBasicMaterial( { color: 0xc3b5a5 } );
 	grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
+	grid_strong.position.copy(VVector3v(0, 0, -0.1));
 	scene.add(grid_strong);
 
 	var geometry = new THREE.SphereGeometry( 0.1, 16, 12 );
@@ -463,7 +526,7 @@ function onDocumentMouseMove( event ) {
 	{
 		var original_screen_position = toScreenPosition(drag_object_handle, camera);
 		var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
-		var world_position = fromScreenPosition(screen_position, camera)
+		var world_position = fromScreenPosition(screen_position, camera);
 		world_position.sub(drag_object_offset);
 
 		if (drag_object_type == "body")
@@ -475,6 +538,13 @@ function onDocumentMouseMove( event ) {
 		}
 		else if (drag_object_type == "head")
 			run_vectors[drag_object].v1 = world_position;
+		else if (drag_object_type == "head_offset")
+		{
+			var difference = VVector3(drag_object_v1).sub(drag_object_handle);
+			difference.add(fromScreenPosition(screen_position, camera));
+
+			run_vectors[drag_object].v1.copy(difference);
+		}
 		else if (drag_object_type == "base")
 			run_vectors[drag_object].v0 = world_position;
 
@@ -498,6 +568,7 @@ function onDocumentMouseDown( event ) {
 	drag_object_handle.copy(intersects[0].point);
 	drag_object_offset.copy(drag_object_handle);
 	drag_object_offset.sub(intersects[0].object.position);
+	drag_object_v1.copy(run_vectors[drag_object].v1);
 }
 
 function onDocumentMouseUp( event ) {
@@ -651,10 +722,22 @@ function update_angle_label(vector)
 			.sub(scale)
 	);
 
-	var new_angle = Math.acos(VVector3(vector.v1).sub(vector.v0).normalize().dot(VVector3v(1, 0, 0))) * 180 / Math.PI;
+	vector.angle_circle.position.copy(vector.v0);
+	vector.angle_xaxis.position.copy(vector.v0);
+
+	var new_angle = Math.acos(VVector3(vector.v1).sub(vector.v0).normalize().dot(VVector3v(1, 0, 0)));
+	var new_angle_degrees = new_angle * 180 / Math.PI;
+	if (vector.v1.y - vector.v0.y < 0)
+		new_angle_degrees = -new_angle_degrees;
 
 	if (vector.old_angle == null || vector.old_angle != new_angle)
-		vector.angle_label.geometry = new THREE.TextGeometry("angle: " + new_angle.toFixed(2) + "o", length_text_attr);
+	{
+		vector.angle_label.geometry = new THREE.TextGeometry("angle: " + new_angle_degrees.toFixed(2) + "°", length_text_attr);
+
+		vector.angle_circle.geometry = new THREE.RingGeometry(0.7, 0.75, 30, 1, 0, new_angle);
+		if (vector.v1.y - vector.v0.y < 0)
+			vector.angle_circle.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( -new_angle ) );
+	}
 
 	vector.old_angle = new_angle;
 }
@@ -722,6 +805,12 @@ function render() {
 		}
 
 		var arrange = false;
+
+		if (vector.fixorigin)
+		{
+			vector.v0.copy(VVector3v(0, 0, 0));
+			arrange = true;
+		}
 
 		for (var j = 0; j < vector.transitions.length; j++)
 		{
