@@ -64,16 +64,23 @@ function visualvectors_init()
 		},
 		{
 			vectors: [
-				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, -4, 0)}),
-				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 1, 0), v1: VVector3v(1, 1, 0)})
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					notransition: true
+				}),
 			]
 		},
 		{
 			vectors: [
-				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 1, 0), v1: VVector3v(0, 0, 0)}),
-				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, -1, 0)})
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					fixbase: "green"
+				})
 			]
-		}
+		},
 	];
 	init();
 	animate();
@@ -321,6 +328,8 @@ function page_setup(page)
 			run_vectors[vname].vector_head_handle.userData.meshtype = "head";
 			run_vectors[vname].vector_base.userData.meshtype = "base";
 		}
+
+		run_vectors[vname].fixbase = init_vectors[i].fixbase;
 
 		if ("length" in init_vectors[i])
 		{
@@ -949,6 +958,18 @@ function render() {
 		if (vector.fixorigin)
 		{
 			vector.v0.copy(VVector3v(0, 0, 0));
+			arrange = true;
+		}
+
+		if (vector.fixbase)
+		{
+			var base_vector = run_vectors[vector.fixbase];
+			if (!base_vector)
+				console.error("Couldn't find base vector: " + vector.fixbase);
+
+			vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
+			vector.v0.copy(base_vector.v1);
+
 			arrange = true;
 		}
 
