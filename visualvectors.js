@@ -27,6 +27,8 @@ var init_vectors;
 var run_vectors = {};
 var raycast_objects = [];
 
+var shift_down = false;
+
 function visualvectors_init()
 {
 	pages = [
@@ -48,6 +50,15 @@ function visualvectors_init()
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true
+				}),
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					coordinates: true,
+					notransition: true
 				}),
 			]
 		},
@@ -190,6 +201,18 @@ function page_setup(page)
 		{
 			parentTransform.remove(run_vectors[name].angle_xaxis);
 			run_vectors[name].angle_xaxis = null;
+		}
+
+		if (run_vectors[name].head_coord_label)
+		{
+			parentTransform.remove(run_vectors[name].head_coord_label);
+			run_vectors[name].head_coord_label = null;
+		}
+
+		if (run_vectors[name].tail_coord_label)
+		{
+			parentTransform.remove(run_vectors[name].tail_coord_label);
+			run_vectors[name].tail_coord_label = null;
 		}
 	}
 
@@ -347,6 +370,26 @@ function page_setup(page)
 			parentTransform.add(run_vectors[vname].angle_xaxis);
 		}
 
+		if ("coordinates" in init_vectors[i])
+		{
+			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			var text_geometry = new THREE.TextGeometry("(0.00, 0.00)", length_text_attr);
+
+			text_geometry.computeBoundingBox();
+
+			var scale = 0.005;
+
+			run_vectors[vname].head_coord_label = new THREE.Mesh( text_geometry, text_material );
+			run_vectors[vname].head_coord_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(run_vectors[vname].head_coord_label);
+			run_vectors[vname].head_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].head_coord_label.scale.x;
+
+			run_vectors[vname].tail_coord_label = new THREE.Mesh( text_geometry, text_material );
+			run_vectors[vname].tail_coord_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(run_vectors[vname].tail_coord_label);
+			run_vectors[vname].tail_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].tail_coord_label.scale.x;
+		}
+
 		if (!("notransition" in init_vectors[i]))
 		{
 			run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
@@ -364,8 +407,12 @@ function page_setup(page)
 		run_vectors[vname].old_length = 0;
 		update_length_label(run_vectors[vname]);
 
-		run_vectors[vname].old_angle = -1;
+		run_vectors[vname].old_angle = -7;
 		update_angle_label(run_vectors[vname]);
+
+		run_vectors[vname].old_head_coords = -100;
+		run_vectors[vname].old_tail_coords = -100;
+		update_coords_label(run_vectors[vname]);
 	}
 }
 
@@ -507,6 +554,7 @@ function init() {
 	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	document.addEventListener( 'mouseup', onDocumentMouseUp, false );
 	document.addEventListener( 'keydown', onDocumentKeyDown, false );
+	document.addEventListener( 'keyup', onDocumentKeyUp, false );
 
 	window.addEventListener( 'resize', onWindowResize, false );
 }
@@ -600,6 +648,25 @@ function onDocumentKeyDown( event ) {
 		event.preventDefault();
 
 		page_retreat();
+		break;
+
+	case 16: // shift
+		event.preventDefault();
+
+		shift_down = true;
+		break;
+
+	default:
+	}
+}
+
+function onDocumentKeyUp( event ) {
+	switch (event.keyCode)
+	{
+	case 16: // shift
+		event.preventDefault();
+
+		shift_down = false;
 		break;
 
 	default:
@@ -702,6 +769,9 @@ function update_length_label(vector)
 
 	var new_length = VVector3(vector.v1).sub(vector.v0).length();
 
+	if (shift_down && Math.abs(Math.round(new_length) - new_length) < 0.1)
+		new_length = Math.round(new_length);
+
 	if (vector.old_length == null || vector.old_length != new_length)
 		vector.length_label.geometry = new THREE.TextGeometry("length: " + new_length.toFixed(2), length_text_attr);
 
@@ -729,6 +799,10 @@ function update_angle_label(vector)
 
 	var new_angle = Math.acos(VVector3(vector.v1).sub(vector.v0).normalize().dot(VVector3v(1, 0, 0)));
 	var new_angle_degrees = new_angle * 180 / Math.PI;
+
+	if (shift_down && Math.abs(Math.round(new_angle_degrees) - new_angle_degrees) < 0.1)
+		new_angle_degrees = Math.round(new_angle_degrees);
+
 	if (vector.v1.y - vector.v0.y < 0)
 		new_angle_degrees = -new_angle_degrees;
 
@@ -742,6 +816,69 @@ function update_angle_label(vector)
 	}
 
 	vector.old_angle = new_angle;
+}
+
+function update_coords_label(vector)
+{
+	if (vector.head_coord_label != undefined && vector.head_coord_label != null)
+	{
+		var offset = VVector3v(0.2, 0.2, -0.1);
+		vector.head_coord_label.position.copy(
+			VVector3(vector.v1)
+				.add(offset)
+		);
+
+		var new_coord = (vector.v1.x+123) * (vector.v1.y+123) * (vector.v1.z+123);
+
+		var x = vector.v1.x;
+		if (Math.abs(vector.v1.x) < 0.01)
+			x = 0;
+
+		var y = vector.v1.y;
+		if (Math.abs(vector.v1.y) < 0.01)
+			y = 0;
+
+		if (shift_down && Math.abs(Math.round(vector.v1.x) - vector.v1.x) < 0.1)
+			x = Math.round(vector.v1.x);
+
+		if (shift_down && Math.abs(Math.round(vector.v1.y) - vector.v1.y) < 0.1)
+			y = Math.round(vector.v1.y);
+
+		if (vector.old_head_coords == null || vector.old_head_coords != new_coord)
+			vector.head_coord_label.geometry = new THREE.TextGeometry("(" + x.toFixed(2) + ", " + y.toFixed(2) + ")", length_text_attr);
+
+		vector.old_head_coords = new_coord;
+	}
+
+	if (vector.tail_coord_label != undefined && vector.tail_coord_label != null)
+	{
+		var offset = VVector3v(-1.2, -0.2, -0.1).multiplyScalar(vector.tail_coord_label.text_size);
+		vector.tail_coord_label.position.copy(
+			VVector3(vector.v0)
+				.add(offset)
+		);
+
+		var new_coord = (vector.v0.x+123) * (vector.v0.y+123) * (vector.v0.z+123);
+
+		var x = vector.v0.x;
+		if (Math.abs(vector.v0.x) < 0.01)
+			x = 0;
+
+		var y = vector.v0.y;
+		if (Math.abs(vector.v0.y) < 0.01)
+			y = 0;
+
+		if (shift_down && Math.abs(Math.round(vector.v0.x) - vector.v0.x) < 0.1)
+			x = Math.round(vector.v0.x);
+
+		if (shift_down && Math.abs(Math.round(vector.v0.y) - vector.v0.y) < 0.1)
+			y = Math.round(vector.v0.y);
+
+		if (vector.old_tail_coords == null || vector.old_tail_coords != new_coord)
+			vector.tail_coord_label.geometry = new THREE.TextGeometry("(" + x.toFixed(2) + ", " + y.toFixed(2) + ")", length_text_attr);
+
+		vector.old_tail_coords = new_coord;
+	}
 }
 
 function render() {
@@ -778,6 +915,7 @@ function render() {
 
 		update_length_label(vector);
 		update_angle_label(vector);
+		update_coords_label(vector);
 
 		if (vector.kill)
 		{
