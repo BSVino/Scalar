@@ -117,7 +117,51 @@ function visualvectors_init()
 				})
 			],
 
-			info_div: "c = a.add(b)"
+			info_div: "<span style='font-family: serif'><em>c = a + b</em></span><br />c = a.add(b);"
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					label: "b",
+					notransition: true,
+					fixbase: "green",
+					fixhead: "blue"
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					notransition: true
+				})
+			],
+
+			info_div: "<span style='font-family: serif'><em>c = a + ?</em></span><br /><br />"
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					label: "b",
+					notransition: true,
+					fixbase: "green",
+					fixhead: "blue"
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					notransition: true
+				})
+			],
+
+			info_div: "<span style='font-family: serif'><em>c - a = b</em></span><br />b = c.sub(a);"
 		},
 	];
 	init();
