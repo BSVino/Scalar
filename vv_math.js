@@ -4,13 +4,13 @@ function VVector(parms)
 		console.error("VVector with no name");
 
 	if (!("color" in parms))
-		console.error("VVector with no name");
+		console.error("VVector with no color");
 
 	if (!("v0" in parms))
-		console.error("VVector with no name");
+		console.error("VVector with no v0");
 
 	if (!("v1" in parms))
-		console.error("VVector with no name");
+		console.error("VVector with no v1");
 
 	return parms;
 }

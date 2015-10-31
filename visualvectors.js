@@ -29,9 +29,80 @@ var raycast_objects = [];
 
 var shift_down = false;
 
+var mesh_mario;
+var mesh_pacman;
+var mesh_clyde;
+
+var texture_pacman1;
+var texture_pacman2;
+var texture_clyde_u;
+var texture_clyde_ur;
+var texture_clyde_ul;
+var texture_clyde_d;
+var texture_clyde_dr;
+var texture_clyde_dl;
+
+
+function mesh_from_name(name)
+{
+	if (name == "mario")
+		return mesh_mario;
+	if (name == "pacman")
+		return mesh_pacman;
+	if (name == "clyde")
+		return mesh_clyde;
+
+	console.error("Unknown mesh name");
+	return null;
+}
+
 function visualvectors_init()
 {
 	pages = [
+	/*
+		{
+			vectors: [
+			],
+
+			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
+				"<em>Visual Vectors</em><br /><br /><br />" +
+				"Follow along at<br />" +
+				"<em>http://vinoisnotouzo.com/vv</em><br />" +
+				"</span>"
+		},
+		{
+			vectors: [
+			],
+
+			center_div: "<br /><br /><br /><br /><span style='font-family: serif'>" +
+				"A 2D location:<br />" +
+				"(x, y)<br />" +
+				"</span>"
+		},
+		{
+			vectors: [
+			],
+
+			center_div: "<span style='font-family: serif'>" +
+				"A <em>vector</em> is an object<br />" +
+				"defined by an ordered set of components<br />" +
+				"with the following properties.<br />" +
+				"If <em>a</em> <em>b</em> and <em>c</em> are vectors and <em>x, y</em> are real numbers:<br /><br />" +
+				"<em>a</em> + <em>b</em> = <em>b</em> + <em>a</em><br />" +
+				"(<em>a</em> + <em>b</em>) + <em>c</em> = <em>a</em> + (<em>b</em> + <em>c</em>)<br />" +
+				"<em>x</em>(<em>y</em><em>a</em>) = (<em>x</em><em>y</em>)<em>a</em><br />" +
+				"<em>x</em>(<em>a</em> + <em>b</em>) = <em>x</em><em>a</em> + <em>x</em><em>b</em><br /><br />" +
+				"...</span>"
+		},
+		{
+			vectors: [
+			],
+
+			center_div: "<br /><br /><br /><br /><span style='font-family: serif'>" +
+				"How Albert Einstein thought about physics:<br /><br />" +
+				"<em>\"I have sensations of a kinesthetic or muscular type.\"</em><br /><br />" +
+				"</span>"
+		},
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0)}),
@@ -66,10 +137,22 @@ function visualvectors_init()
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true,
-					notransition: true
+					coordinates: true,
+					notransition: true,
+					spritehead: "mario"
 				}),
 			]
 		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					notransition: true,
+					spritehead: "mario"
+				}),
+			]
+		},
+		*/
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
@@ -77,7 +160,8 @@ function visualvectors_init()
 					fixorigin: true
 				}),
 				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
-					fixbase: "green"
+					fixbase: "green",
+					spritehead: "mario"
 				})
 			]
 		},
@@ -93,7 +177,9 @@ function visualvectors_init()
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					fixorigin: true,
-					fixhead: "red"
+					fixhead: "red",
+					nodrag: true,
+					spritehead: "mario"
 				})
 			],
 		},
@@ -113,7 +199,8 @@ function visualvectors_init()
 					label: "c",
 					fixorigin: true,
 					notransition: true,
-					fixhead: "red"
+					fixhead: "red",
+					nodrag: true
 				})
 			],
 
@@ -124,18 +211,39 @@ function visualvectors_init()
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					label: "a",
 					notransition: true,
-					fixorigin: true
+					fixorigin: true,
+					spritehead: "clyde"
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					notransition: true,
+					spritehead: "pacman"
+				})
+			],
+
+			info_div: "<span style='font-family: serif'><em>c = a + ?</em></span><br /><br />"
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true,
+					spritehead: "clyde"
 				}),
 				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
 					label: "b",
 					notransition: true,
 					fixbase: "green",
-					fixhead: "blue"
+					fixhead: "blue",
+					nodrag: true
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					label: "c",
 					fixorigin: true,
-					notransition: true
+					notransition: true,
+					spritehead: "pacman"
 				})
 			],
 
@@ -152,7 +260,8 @@ function visualvectors_init()
 					label: "b",
 					notransition: true,
 					fixbase: "green",
-					fixhead: "blue"
+					fixhead: "blue",
+					nodrag: true
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					label: "c",
@@ -262,6 +371,11 @@ function page_setup(page)
 		info_div.innerHTML = pages[page].info_div;
 	else
 		info_div.innerHTML = "";
+
+	if ("center_div" in pages[page])
+		center_div.innerHTML = pages[page].center_div;
+	else
+		center_div.innerHTML = "";
 
 	for (var name in run_vectors)
 	{
@@ -507,7 +621,14 @@ function page_setup(page)
 			run_vectors[vname].name_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].name_label.scale.x;
 		}
 
-		if (!("notransition" in init_vectors[i]))
+		if ("notransition" in init_vectors[i])
+		{
+			if (!("v0" in run_vectors[vname]))
+				run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
+			if (!("v1" in run_vectors[vname]))
+				run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
+		}
+		else
 		{
 			run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
 			run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
@@ -515,9 +636,22 @@ function page_setup(page)
 
 		run_vectors[vname].kill = false;
 
-		raycast_objects.push(run_vectors[vname].vector_base);
-		raycast_objects.push(run_vectors[vname].vector_handle);
-		raycast_objects.push(run_vectors[vname].vector_head_handle);
+		if (!("nodrag" in init_vectors[i]))
+		{
+			raycast_objects.push(run_vectors[vname].vector_base);
+			raycast_objects.push(run_vectors[vname].vector_handle);
+			raycast_objects.push(run_vectors[vname].vector_head_handle);
+		}
+
+		if (run_vectors[vname].spritehead)
+		{
+			parentTransform.remove(run_vectors[vname].spritehead);
+		}
+		if ("spritehead" in init_vectors[i])
+		{
+			run_vectors[vname].spritehead = mesh_from_name(init_vectors[i].spritehead);
+			parentTransform.add(run_vectors[vname].spritehead);
+		}
 
 		arrangeVVector(init_vectors[i].name);
 
@@ -550,6 +684,7 @@ function page_advance()
 }
 
 var info_div;
+var center_div;
 
 function init() {
 	container = document.createElement( 'div' );
@@ -560,11 +695,22 @@ function init() {
 	info.style.bottom = '20px';
 	info.style.width = '100%';
 	info.style.textAlign = 'center';
-	info.style.fontSize = "24px";
+	info.style.fontSize = "34px";
 	info.innerHTML = '';
 	container.appendChild( info );
 
 	info_div = info;
+
+	var center = document.createElement( 'div' );
+	center.style.position = 'absolute';
+	center.style.top = '20px';
+	center.style.width = '100%';
+	center.style.textAlign = 'center';
+	center.style.fontSize = "34px";
+	center.innerHTML = '';
+	container.appendChild( center );
+
+	center_div = center;
 
 	var width = window.innerWidth;
 	var height = window.innerHeight;
@@ -574,6 +720,26 @@ function init() {
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 
 	scene = new THREE.Scene();
+
+	var spritegeometry = new THREE.BoxGeometry( 1, 1, 0 );
+
+	var texture_mario = THREE.ImageUtils.loadTexture( "textures/mario.png" );
+	var material_mario = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_mario, alphaTest: 0.5 } );
+	mesh_mario = new THREE.Mesh( spritegeometry, material_mario );
+
+	texture_pacman1 = THREE.ImageUtils.loadTexture( "textures/pacman1.png" );
+	texture_pacman2 = THREE.ImageUtils.loadTexture( "textures/pacman2.png" );
+	var material_pacman = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_pacman1, alphaTest: 0.5 } );
+	mesh_pacman = new THREE.Mesh( spritegeometry, material_pacman );
+
+	texture_clyde_u = THREE.ImageUtils.loadTexture( "textures/clyde-u.png" );
+	texture_clyde_ur = THREE.ImageUtils.loadTexture( "textures/clyde-ur.png" );
+	texture_clyde_ul = THREE.ImageUtils.loadTexture( "textures/clyde-ul.png" );
+	texture_clyde_d = THREE.ImageUtils.loadTexture( "textures/clyde-d.png" );
+	texture_clyde_dr = THREE.ImageUtils.loadTexture( "textures/clyde-dr.png" );
+	texture_clyde_dl = THREE.ImageUtils.loadTexture( "textures/clyde-dl.png" );
+	var material_clyde = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_clyde_ul, alphaTest: 0.5 } );
+	mesh_clyde = new THREE.Mesh( spritegeometry, material_clyde );
 
 	var GRID_MAX = 5;
 
@@ -944,7 +1110,7 @@ function update_coords_label(vector)
 {
 	if (vector.head_coord_label != undefined && vector.head_coord_label != null)
 	{
-		var offset = VVector3v(0.2, 0.2, -0.1);
+		var offset = VVector3v(0.4, 0.2, -0.1);
 		vector.head_coord_label.position.copy(
 			VVector3(vector.v1)
 				.add(offset)
@@ -1006,9 +1172,9 @@ function update_coords_label(vector)
 function render() {
 	dt = clock.getDelta();
 
-	camera.position.x = 0;
+	camera.position.x = 0;//Math.cos(clock.getElapsedTime())*10;
 	camera.position.y = 0;
-	camera.position.z = 10;
+	camera.position.z = 10;//Math.sin(clock.getElapsedTime())*10;
 	camera.lookAt( new THREE.Vector3(0, 0, 0) );
 
 	camera.updateMatrixWorld();
@@ -1028,6 +1194,34 @@ function render() {
 		currentIntersected = undefined;
 
 		sphereInter.visible = false;
+	}
+
+	if ((clock.getElapsedTime() % 0.8) < 0.4)
+		mesh_pacman.material.map = texture_pacman1;
+	else
+		mesh_pacman.material.map = texture_pacman2;
+
+	var clyde_to_pacman = VVector3(mesh_pacman.position).sub(mesh_clyde.position).normalize();
+	var dot_up = clyde_to_pacman.dot(VVector3v(0, 1, 0));
+	var dot_right = clyde_to_pacman.dot(VVector3v(1, 0, 0));
+
+	if (dot_up > 0)
+	{
+		if (dot_right > 0.5)
+			mesh_clyde.material.map = texture_clyde_ur;
+		else if (dot_right < -0.5)
+			mesh_clyde.material.map = texture_clyde_ul;
+		else
+			mesh_clyde.material.map = texture_clyde_u;
+	}
+	else
+	{
+		if (dot_right > 0.5)
+			mesh_clyde.material.map = texture_clyde_dr;
+		else if (dot_right < -0.5)
+			mesh_clyde.material.map = texture_clyde_dl;
+		else
+			mesh_clyde.material.map = texture_clyde_d;
 	}
 
 	// Handle animations
@@ -1127,6 +1321,9 @@ function render() {
 			vector_transition(vector, transition, lerp);
 			arrange = true;
 		}
+
+		if (vector.spritehead)
+			vector.spritehead.position.copy(vector.v1);
 
 		if (arrange)
 			arrangeVVector(k);
