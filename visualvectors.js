@@ -59,7 +59,6 @@ function mesh_from_name(name)
 function visualvectors_init()
 {
 	pages = [
-	/*
 		{
 			vectors: [
 			],
@@ -152,7 +151,6 @@ function visualvectors_init()
 				}),
 			]
 		},
-		*/
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
@@ -200,6 +198,89 @@ function visualvectors_init()
 					fixorigin: true,
 					notransition: true,
 					fixhead: "red",
+					nodrag: true
+				})
+			],
+
+			info_div: "<span style='font-family: serif'><em>c = a + b</em></span><br />c = a.add(b);"
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					length: true,
+					angle: true,
+					notransition: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					length: true,
+					angle: true,
+					notransition: true,
+				}),
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					fixorigin: true
+				}),
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					label: "b",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					fixheadsum: ["red", "green"],
+					nodrag: true
+				})
+			],
+
+			info_div: "<span style='font-family: serif'><em>c = a + b</em></span><br />c = a.add(b);"
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					label: "b",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "greendup", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					fixbase: "red",
+					fixhead: "blue",
+					notransition: true,
+					nodrag: true
+				}),
+				VVector({name: "reddup", color: 0x690D0D, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "b",
+					fixbase: "green",
+					fixhead: "blue",
+					notransition: true,
+					nodrag: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					fixheadsum: ["red", "green"],
+					notransition: true,
 					nodrag: true
 				})
 			],
@@ -355,10 +436,6 @@ function remove_raycast_object(object)
 			return;
 		}
 	}
-
-	console.error("Couldn't find raycast object to remove:");
-	console.log(object);
-	console.log(raycast_objects);
 }
 
 function page_setup(page)
@@ -377,100 +454,123 @@ function page_setup(page)
 	else
 		center_div.innerHTML = "";
 
-	for (var name in run_vectors)
+	for (var vname in run_vectors)
 	{
-		if (!run_vectors[name].kill)
-		{
-			remove_raycast_object(run_vectors[name].vector_handle);
-			remove_raycast_object(run_vectors[name].vector_head_handle);
-			remove_raycast_object(run_vectors[name].vector_base);
-		}
-		run_vectors[name].kill = true;
+		var v = run_vectors[vname];
 
-		if (run_vectors[name].length_label)
+		if (!v.kill)
 		{
-			parentTransform.remove(run_vectors[name].length_label);
-			run_vectors[name].length_label = null;
+			remove_raycast_object(v.vector_handle);
+			remove_raycast_object(v.vector_head_handle);
+			remove_raycast_object(v.vector_base);
 		}
+		v.kill = true;
 
-		if (run_vectors[name].angle_label)
+		if (v.length_label)
 		{
-			parentTransform.remove(run_vectors[name].angle_label);
-			run_vectors[name].angle_label = null;
+			parentTransform.remove(v.length_label);
+			v.length_label = null;
 		}
 
-		if (run_vectors[name].angle_circle)
+		if (v.angle_label)
 		{
-			parentTransform.remove(run_vectors[name].angle_circle);
-			run_vectors[name].angle_circle = null;
+			parentTransform.remove(v.angle_label);
+			v.angle_label = null;
 		}
 
-		if (run_vectors[name].angle_xaxis)
+		if (v.angle_circle)
 		{
-			parentTransform.remove(run_vectors[name].angle_xaxis);
-			run_vectors[name].angle_xaxis = null;
+			parentTransform.remove(v.angle_circle);
+			v.angle_circle = null;
 		}
 
-		if (run_vectors[name].head_coord_label)
+		if (v.angle_xaxis)
 		{
-			parentTransform.remove(run_vectors[name].head_coord_label);
-			run_vectors[name].head_coord_label = null;
+			parentTransform.remove(v.angle_xaxis);
+			v.angle_xaxis = null;
 		}
 
-		if (run_vectors[name].tail_coord_label)
+		if (v.head_coord_label)
 		{
-			parentTransform.remove(run_vectors[name].tail_coord_label);
-			run_vectors[name].tail_coord_label = null;
+			parentTransform.remove(v.head_coord_label);
+			v.head_coord_label = null;
 		}
 
-		if (run_vectors[name].name_label)
+		if (v.tail_coord_label)
 		{
-			parentTransform.remove(run_vectors[name].name_label);
-			run_vectors[name].name_label = null;
+			parentTransform.remove(v.tail_coord_label);
+			v.tail_coord_label = null;
+		}
+
+		if (v.name_label)
+		{
+			parentTransform.remove(v.name_label);
+			v.name_label = null;
+		}
+
+		if (v.spritehead)
+		{
+			parentTransform.remove(v.spritehead);
+			v.spritehead = null;
 		}
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
 	{
 		var vname = init_vectors[i].name;
+		var v = run_vectors[vname];
+
+		var init_v0 = VVector3(init_vectors[i].v0);
+		var init_v1 = VVector3(init_vectors[i].v1);
 
 		var fixorigin = false;
+		var test = false;
 
 		if ("fixorigin" in init_vectors[i] && init_vectors[i].fixorigin)
 			fixorigin = true;
 
 		if (fixorigin)
-			init_vectors[i].v0 = VVector3v(0, 0, 0);
+		{
+			if (v && (!("fixorigin" in v) || !v.fixorigin))
+			{
+				test = true;
+				init_v1.copy(v.v1).sub(v.v0);
+			}
+
+			init_v0 = VVector3v(0, 0, 0);
+		}
 
 		if (vname in run_vectors)
 		{
 			if (!("notransition" in init_vectors[i]))
 			{
-				run_vectors[vname].transitions = [];
+				v.transitions = [];
 
+				if (v.fixorigin)
 				{
-					var d0 = TV3_Distance(run_vectors[vname].v0, run_vectors[vname].v1);
-					var d1 = TV3_Distance(init_vectors[i].v0, init_vectors[i].v1);
+					var d0 = TV3_Distance(v.v0, v.v1);
+					var d1 = TV3_Distance(init_v0, init_v1);
 					if (Math.abs(d0 - d1) > 0.00001)
-						run_vectors[vname].transitions.push(VTransition("length", d0, d1,
+						v.transitions.push(VTransition("length", d0, d1,
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
 							));
 				}
 				{
-					var v0 = TV3_Center(run_vectors[vname].v0, run_vectors[vname].v1);
-					var v1 = TV3_Center(init_vectors[i].v0, init_vectors[i].v1);
+					var v0 = TV3_Center(v.v0, v.v1);
+					var v1 = TV3_Center(init_v0, init_v1);
 					if (VVector3(v0).sub(v1).length() > 0.00001)
-						run_vectors[vname].transitions.push(VTransition("center", v0, v1,
+						v.transitions.push(VTransition("center", v0, v1,
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
 							));
 				}
+				if (v.fixorigin)
 				{
-					var q0 = TV3_Direction(run_vectors[vname].v0, run_vectors[vname].v1);
-					var q1 = TV3_Direction(init_vectors[i].v0, init_vectors[i].v1);
+					var q0 = TV3_Direction(v.v0, v.v1);
+					var q1 = TV3_Direction(init_v0, init_v1);
 					var v0 = VVector3v(1, 0, 0).applyQuaternion(q0);
 					var v1 = VVector3v(1, 0, 0).applyQuaternion(q1);
 					if (v0.dot(v1) < 0.9999)
-						run_vectors[vname].transitions.push(VTransition("direction", q0, q1,
+						v.transitions.push(VTransition("direction", q0, q1,
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
 							));
 				}
@@ -503,39 +603,40 @@ function page_setup(page)
 			parentTransform.add( vector_head_handle );
 			parentTransform.add( vector_base );
 
-			run_vectors[vname] = {};
-			run_vectors[vname].transitions = [];
-			run_vectors[vname].vector = vector;
-			run_vectors[vname].vector_head = vector_head;
-			run_vectors[vname].vector_handle = vector_handle;
-			run_vectors[vname].vector_head_handle = vector_head_handle;
-			run_vectors[vname].vector_base = vector_base;
+			v = run_vectors[vname] = {};
+			v.transitions = [];
+			v.vector = vector;
+			v.vector_head = vector_head;
+			v.vector_handle = vector_handle;
+			v.vector_head_handle = vector_head_handle;
+			v.vector_base = vector_base;
 
-			run_vectors[vname].vector.material.transparent = true;
-			run_vectors[vname].vector.material.opacity = 0;
+			v.vector.material.transparent = true;
+			v.vector.material.opacity = 0;
 		}
 
-		run_vectors[vname].fixorigin = fixorigin;
+		v.fixorigin = fixorigin;
 
 		if (fixorigin || "fixbase" in init_vectors[i])
 		{
-			run_vectors[vname].vector.userData.meshtype = "head_offset";
-			run_vectors[vname].vector_handle.userData.meshtype = "head_offset";
-			run_vectors[vname].vector_head.userData.meshtype = "head";
-			run_vectors[vname].vector_head_handle.userData.meshtype = "head";
-			run_vectors[vname].vector_base.userData.meshtype = "head_offset";
+			v.vector.userData.meshtype = "head_offset";
+			v.vector_handle.userData.meshtype = "head_offset";
+			v.vector_head.userData.meshtype = "head";
+			v.vector_head_handle.userData.meshtype = "head";
+			v.vector_base.userData.meshtype = "head_offset";
 		}
 		else
 		{
-			run_vectors[vname].vector.userData.meshtype = "body";
-			run_vectors[vname].vector_handle.userData.meshtype = "body";
-			run_vectors[vname].vector_head.userData.meshtype = "head";
-			run_vectors[vname].vector_head_handle.userData.meshtype = "head";
-			run_vectors[vname].vector_base.userData.meshtype = "base";
+			v.vector.userData.meshtype = "body";
+			v.vector_handle.userData.meshtype = "body";
+			v.vector_head.userData.meshtype = "head";
+			v.vector_head_handle.userData.meshtype = "head";
+			v.vector_base.userData.meshtype = "base";
 		}
 
-		run_vectors[vname].fixbase = init_vectors[i].fixbase;
-		run_vectors[vname].fixhead = init_vectors[i].fixhead;
+		v.fixbase = init_vectors[i].fixbase;
+		v.fixhead = init_vectors[i].fixhead;
+		v.fixheadsum = init_vectors[i].fixheadsum;
 
 		if ("length" in init_vectors[i])
 		{
@@ -546,11 +647,11 @@ function page_setup(page)
 
 			var scale = 0.005;
 
-			run_vectors[vname].length_label = new THREE.Mesh( text_geometry, text_material );
-			run_vectors[vname].length_label.scale.copy(VVector3v(scale, scale, scale));
-			parentTransform.add(run_vectors[vname].length_label);
+			v.length_label = new THREE.Mesh( text_geometry, text_material );
+			v.length_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(v.length_label);
 
-			run_vectors[vname].length_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].length_label.scale.x;
+			v.length_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.length_label.scale.x;
 		}
 
 		if ("angle" in init_vectors[i])
@@ -562,15 +663,15 @@ function page_setup(page)
 
 			var scale = 0.005;
 
-			run_vectors[vname].angle_label = new THREE.Mesh( text_geometry, text_material );
-			run_vectors[vname].angle_label.scale.copy(VVector3v(scale, scale, scale));
-			parentTransform.add(run_vectors[vname].angle_label);
+			v.angle_label = new THREE.Mesh( text_geometry, text_material );
+			v.angle_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(v.angle_label);
 
-			run_vectors[vname].angle_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].angle_label.scale.x;
+			v.angle_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.angle_label.scale.x;
 
 			var circle_geometry = new THREE.RingGeometry(1, 5, 32);
-			run_vectors[vname].angle_circle = new THREE.Mesh(circle_geometry, text_material);
-			parentTransform.add(run_vectors[vname].angle_circle);
+			v.angle_circle = new THREE.Mesh(circle_geometry, text_material);
+			parentTransform.add(v.angle_circle);
 
 			var xaxis_geometry = new THREE.Geometry();
 
@@ -581,8 +682,8 @@ function page_setup(page)
 				);
 
 			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
-			run_vectors[vname].angle_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
-			parentTransform.add(run_vectors[vname].angle_xaxis);
+			v.angle_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
+			parentTransform.add(v.angle_xaxis);
 		}
 
 		if ("coordinates" in init_vectors[i])
@@ -594,15 +695,15 @@ function page_setup(page)
 
 			var scale = 0.005;
 
-			run_vectors[vname].head_coord_label = new THREE.Mesh( text_geometry, text_material );
-			run_vectors[vname].head_coord_label.scale.copy(VVector3v(scale, scale, scale));
-			parentTransform.add(run_vectors[vname].head_coord_label);
-			run_vectors[vname].head_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].head_coord_label.scale.x;
+			v.head_coord_label = new THREE.Mesh( text_geometry, text_material );
+			v.head_coord_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(v.head_coord_label);
+			v.head_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.head_coord_label.scale.x;
 
-			run_vectors[vname].tail_coord_label = new THREE.Mesh( text_geometry, text_material );
-			run_vectors[vname].tail_coord_label.scale.copy(VVector3v(scale, scale, scale));
-			parentTransform.add(run_vectors[vname].tail_coord_label);
-			run_vectors[vname].tail_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].tail_coord_label.scale.x;
+			v.tail_coord_label = new THREE.Mesh( text_geometry, text_material );
+			v.tail_coord_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(v.tail_coord_label);
+			v.tail_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.tail_coord_label.scale.x;
 		}
 
 		if ("label" in init_vectors[i])
@@ -614,56 +715,52 @@ function page_setup(page)
 
 			var scale = 0.005;
 
-			run_vectors[vname].name_label = new THREE.Mesh( text_geometry, text_material );
-			run_vectors[vname].name_label.scale.copy(VVector3v(scale, scale, scale));
-			parentTransform.add(run_vectors[vname].name_label);
+			v.name_label = new THREE.Mesh( text_geometry, text_material );
+			v.name_label.scale.copy(VVector3v(scale, scale, scale));
+			parentTransform.add(v.name_label);
 
-			run_vectors[vname].name_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * run_vectors[vname].name_label.scale.x;
+			v.name_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.name_label.scale.x;
 		}
 
 		if ("notransition" in init_vectors[i])
 		{
-			if (!("v0" in run_vectors[vname]))
-				run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
-			if (!("v1" in run_vectors[vname]))
-				run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
+			if (!("v0" in v))
+				v.v0 = VVector3(init_v0);
+			if (!("v1" in v))
+				v.v1 = VVector3(init_v1);
 		}
 		else
 		{
-			run_vectors[vname].v0 = VVector3(init_vectors[i].v0);
-			run_vectors[vname].v1 = VVector3(init_vectors[i].v1);
+			v.v0 = VVector3(init_v0);
+			v.v1 = VVector3(init_v1);
 		}
 
-		run_vectors[vname].kill = false;
+		v.kill = false;
 
 		if (!("nodrag" in init_vectors[i]))
 		{
-			raycast_objects.push(run_vectors[vname].vector_base);
-			raycast_objects.push(run_vectors[vname].vector_handle);
-			raycast_objects.push(run_vectors[vname].vector_head_handle);
+			raycast_objects.push(v.vector_base);
+			raycast_objects.push(v.vector_handle);
+			raycast_objects.push(v.vector_head_handle);
 		}
 
-		if (run_vectors[vname].spritehead)
-		{
-			parentTransform.remove(run_vectors[vname].spritehead);
-		}
 		if ("spritehead" in init_vectors[i])
 		{
-			run_vectors[vname].spritehead = mesh_from_name(init_vectors[i].spritehead);
-			parentTransform.add(run_vectors[vname].spritehead);
+			v.spritehead = mesh_from_name(init_vectors[i].spritehead);
+			parentTransform.add(v.spritehead);
 		}
 
 		arrangeVVector(init_vectors[i].name);
 
-		run_vectors[vname].old_length = 0;
-		update_length_label(run_vectors[vname]);
+		v.old_length = 0;
+		update_length_label(v);
 
-		run_vectors[vname].old_angle = -7;
-		update_angle_label(run_vectors[vname]);
+		v.old_angle = -7;
+		update_angle_label(v);
 
-		run_vectors[vname].old_head_coords = -100;
-		run_vectors[vname].old_tail_coords = -100;
-		update_coords_label(run_vectors[vname]);
+		v.old_head_coords = -100;
+		v.old_tail_coords = -100;
+		update_coords_label(v);
 	}
 }
 
@@ -1277,8 +1374,21 @@ function render() {
 
 		if (vector.fixorigin)
 		{
-			vector.v0.copy(VVector3v(0, 0, 0));
-			arrange = true;
+			var transition = false;
+			for (var t in vector.transitions)
+			{
+				if (vector.transitions[t].type == "center")
+				{
+					transition = true;
+					break;
+				}
+			}
+
+			if (!transition)
+			{
+				vector.v0.copy(VVector3v(0, 0, 0));
+				arrange = true;
+			}
 		}
 
 		if (vector.fixbase)
@@ -1300,6 +1410,24 @@ function render() {
 				console.error("Couldn't find head vector: " + vector.fixhead);
 
 			vector.v1.copy(head_vector.v1);
+
+			arrange = true;
+		}
+
+		if (vector.fixheadsum)
+		{
+			var sum = VVector3v(0, 0, 0);
+
+			for (var i in vector.fixheadsum)
+			{
+				var term_vector = run_vectors[vector.fixheadsum[i]];
+				if (!term_vector)
+					console.error("Couldn't find head vector: " + vector.fixheadsum[i]);
+
+				sum.add(VVector3(term_vector.v1).sub(term_vector.v0));
+			}
+
+			vector.v1.copy(sum);
 
 			arrange = true;
 		}
