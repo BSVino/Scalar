@@ -59,6 +59,7 @@ function mesh_from_name(name)
 function visualvectors_init()
 {
 	pages = [
+		// INTRO
 		{
 			vectors: [
 			],
@@ -102,6 +103,8 @@ function visualvectors_init()
 				"<em>\"I have sensations of a kinesthetic or muscular type.\"</em><br /><br />" +
 				"</span>"
 		},
+
+		// VECTOR
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0)}),
@@ -142,6 +145,8 @@ function visualvectors_init()
 				}),
 			]
 		},
+
+		// ADDITION
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
@@ -204,6 +209,8 @@ function visualvectors_init()
 
 			info_div: "<span style='font-family: serif'><em>c = a + b</em></span><br />c = a.add(b);"
 		},
+
+		// ADDITION TAKE 2
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
@@ -287,6 +294,8 @@ function visualvectors_init()
 
 			info_div: "<span style='font-family: serif'><em>c = a + b</em></span><br />c = a.add(b);"
 		},
+
+		// SUBTRACTION
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
@@ -330,7 +339,7 @@ function visualvectors_init()
 
 			info_div: "<span style='font-family: serif'><em>c = a + ?</em></span><br /><br />"
 		},
-		{
+ 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					label: "a",
@@ -352,6 +361,49 @@ function visualvectors_init()
 			],
 
 			info_div: "<span style='font-family: serif'><em>c - a = b</em></span><br />b = c.sub(a);"
+		},
+
+		// SCALAR MULTIPLICATION
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					fixbase: "green",
+					length: true,
+					spritehead: "mario"
+				})
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixdirection: "red",
+					length: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(2, 1, 0), v1: VVector3v(2, 2, 0),
+					length: true,
+					//nodrag: true,
+					fixdirection: "green"
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					label: "a",
+					fixdirection: "red",
+					length: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(2, 1, 0), v1: VVector3v(2, 2, 0),
+					label: "b",
+					fixdirection: "green",
+					length: true
+				}),
+			],
+
+			info_scalar_multiplication: ["green", "red"]
 		},
 	];
 	init();
@@ -539,6 +591,11 @@ function page_setup(page)
 
 			init_v0 = VVector3v(0, 0, 0);
 		}
+		else if (init_vectors[i].fixbase)
+		{
+			init_v1.sub(init_v0).add(run_vectors[init_vectors[i].fixbase].v1);
+			init_v0.copy(run_vectors[init_vectors[i].fixbase].v1);
+		}
 
 		if (vname in run_vectors)
 		{
@@ -546,7 +603,6 @@ function page_setup(page)
 			{
 				v.transitions = [];
 
-				if (v.fixorigin)
 				{
 					var d0 = TV3_Distance(v.v0, v.v1);
 					var d1 = TV3_Distance(init_v0, init_v1);
@@ -563,7 +619,6 @@ function page_setup(page)
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
 							));
 				}
-				if (v.fixorigin)
 				{
 					var q0 = TV3_Direction(v.v0, v.v1);
 					var q1 = TV3_Direction(init_v0, init_v1);
@@ -637,6 +692,8 @@ function page_setup(page)
 		v.fixbase = init_vectors[i].fixbase;
 		v.fixhead = init_vectors[i].fixhead;
 		v.fixheadsum = init_vectors[i].fixheadsum;
+		v.fixdirection = init_vectors[i].fixdirection;
+		v.fixlength = init_vectors[i].fixlength;
 
 		if ("length" in init_vectors[i])
 		{
@@ -720,6 +777,8 @@ function page_setup(page)
 			parentTransform.add(v.name_label);
 
 			v.name_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.name_label.scale.x;
+
+			v.name_label_text = init_vectors[i].label;
 		}
 
 		if ("notransition" in init_vectors[i])
@@ -1372,6 +1431,62 @@ function render() {
 
 		var arrange = false;
 
+		if (vector.fixdirection && run_vectors[drag_object] != vector)
+		{
+			var dir_vector = run_vectors[vector.fixdirection];
+			if (!dir_vector)
+				console.error("Couldn't find direction vector: " + vector.fixdirection);
+
+			var new_direction = TV3_Direction(dir_vector.v0, dir_vector.v1);
+
+			var center = TV3_Center(vector.v0, vector.v1);
+			var length = TV3_Distance(vector.v0, vector.v1);
+
+			var new_v = VVector3v(1, 0, 0);
+			new_v.applyQuaternion(new_direction);
+			new_v.multiplyScalar(length/2);
+
+			vector.v0 = VVector3(new_v);
+			vector.v0.multiplyScalar(-1);
+			vector.v0.add(center);
+
+			vector.v1 = VVector3(new_v);
+			vector.v1.add(center);
+
+			arrange = true;
+		}
+
+		if (vector.fixlength)
+		{
+			var new_length = vector.fixlength;
+			//var length_vector = run_vectors[vector.fixlength];
+			//if (length_vector)
+			//	new_length = TV3_Distance(length_vector.v0, length_vector.v1);
+
+			var v = VVector3(vector.v1);
+			v.sub(vector.v0);
+
+			var center = VVector3(v);
+			center.multiplyScalar(0.5);
+			center.add(vector.v0);
+
+			v.normalize();
+			v.multiplyScalar(new_length);
+
+			var new_v0 = VVector3(v);
+			new_v0.multiplyScalar(-0.5);
+			new_v0.add(center);
+
+			var new_v1 = VVector3(v);
+			new_v1.multiplyScalar(0.5);
+			new_v1.add(center);
+
+			vector.v0 = new_v0;
+			vector.v1 = new_v1;
+
+			arrange = true;
+		}
+
 		if (vector.fixorigin)
 		{
 			var transition = false;
@@ -1386,6 +1501,7 @@ function render() {
 
 			if (!transition)
 			{
+				vector.v1.sub(vector.v0);
 				vector.v0.copy(VVector3v(0, 0, 0));
 				arrange = true;
 			}
@@ -1394,13 +1510,13 @@ function render() {
 		if (vector.fixbase)
 		{
 			var base_vector = run_vectors[vector.fixbase];
-			if (!base_vector)
-				console.error("Couldn't find base vector: " + vector.fixbase);
+			if (base_vector)
+			{
+				vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
+				vector.v0.copy(base_vector.v1);
 
-			vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
-			vector.v0.copy(base_vector.v1);
-
-			arrange = true;
+				arrange = true;
+			}
 		}
 
 		if (vector.fixhead)
@@ -1471,5 +1587,16 @@ function render() {
 	}
 
 	renderer.render( scene, camera );
+
+	if (pages[current_page].info_scalar_multiplication)
+	{
+		var vector_a_name = pages[current_page].info_scalar_multiplication[1];
+		var vector_b_name = pages[current_page].info_scalar_multiplication[0];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
+		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " = " + ratio.toFixed(3) + run_vectors[vector_b_name].name_label_text + "</em></span><br />"
+			+ run_vectors[vector_a_name].name_label_text + " = " + run_vectors[vector_b_name].name_label_text + ".multiplyScalar(" + ratio.toFixed(3) + ");";
+	}
 }
 
