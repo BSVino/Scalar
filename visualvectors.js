@@ -384,7 +384,6 @@ function visualvectors_init()
 				}),
 				VVector({name: "red", color: 0x690D0D, v0: VVector3v(2, 1, 0), v1: VVector3v(2, 2, 0),
 					length: true,
-					//nodrag: true,
 					fixdirection: "green"
 				}),
 			],
@@ -392,11 +391,13 @@ function visualvectors_init()
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
 					label: "a",
 					fixdirection: "red",
 					length: true
 				}),
 				VVector({name: "red", color: 0x690D0D, v0: VVector3v(2, 1, 0), v1: VVector3v(2, 2, 0),
+					notransition: true,
 					label: "b",
 					fixdirection: "green",
 					length: true
@@ -404,6 +405,122 @@ function visualvectors_init()
 			],
 
 			info_scalar_multiplication: ["green", "red"]
+		},
+
+		// NORMALIZING
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					label: "a",
+					fixdirection: "red",
+					length: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(2, 1, 0), v1: VVector3v(2, 2, 0),
+					notransition: true,
+					label: "b",
+					fixdirection: "green",
+					fixlength: 1,
+					length: true
+				}),
+			],
+
+			info_normalize: ["green", "red"]
+		},
+
+		// DOT PRODUCT
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					angleto: "red"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					fixorigin: true
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					angleto: "red",
+					label: "a"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					label: "b"
+				}),
+			],
+
+			info_dot_product: ["green", "red"]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					label: "a",
+					length: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					label: "b",
+					length: true
+				}),
+			],
+
+			info_dot_product_angle: ["green", "red"]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					fixlength: 1,
+					label: "a"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					fixlength: 1,
+					label: "b"
+				}),
+			],
+
+			info_dot_product_angle: ["green", "red"]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					fixlength: 1,
+					label: "a"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					fixlength: 1,
+					label: "b"
+				}),
+			],
+
+			info_dot_product: ["green", "red"]
+		},
+
+		{
+			vectors: [
+			],
+
+			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
+				"<em>Questions</em><br /><br /><br />" +
+				"<em>http://vinoisnotouzo.com/vv</em><br /><br />" +
+				"<em><span style='font-size: small'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens</span>" +
+				"</span>"
 		},
 	];
 	init();
@@ -711,10 +828,10 @@ function page_setup(page)
 			v.length_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.length_label.scale.x;
 		}
 
-		if ("angle" in init_vectors[i])
+		if ("angle" in init_vectors[i] || "angleto" in init_vectors[i])
 		{
 			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
-			var text_geometry = new THREE.TextGeometry("Angle", angle_text_attr);
+			var text_geometry = new THREE.TextGeometry("angle: 123.45", angle_text_attr);
 
 			text_geometry.computeBoundingBox();
 
@@ -730,17 +847,25 @@ function page_setup(page)
 			v.angle_circle = new THREE.Mesh(circle_geometry, text_material);
 			parentTransform.add(v.angle_circle);
 
-			var xaxis_geometry = new THREE.Geometry();
+			if ("angle" in init_vectors[i])
+			{
+				var xaxis_geometry = new THREE.Geometry();
 
-			for (var k = 0; k < 2; k += 0.2)
-				xaxis_geometry.vertices.push(
-					new THREE.Vector3( k, 0, 0 ),
-					new THREE.Vector3( k+0.08, 0, 0 )
-				);
+				for (var k = 0; k < 2; k += 0.2)
+					xaxis_geometry.vertices.push(
+						new THREE.Vector3( k, 0, 0 ),
+						new THREE.Vector3( k+0.08, 0, 0 )
+					);
 
-			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
-			v.angle_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
-			parentTransform.add(v.angle_xaxis);
+				var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+				v.angle_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
+				parentTransform.add(v.angle_xaxis);
+			}
+
+			if ("angleto" in init_vectors[i])
+				v.angleto = init_vectors[i].angleto;
+
+			v.angle_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.angle_label.scale.x;
 		}
 
 		if ("coordinates" in init_vectors[i])
@@ -1228,26 +1353,58 @@ function update_angle_label(vector)
 		return;
 
 	var scale = VVector3v(0, 0, -0.1);
-	vector.angle_label.position.copy(
-		VVector3(vector.v1)
+
+	var vec_normalized = VVector3(vector.v1).sub(vector.v0).normalize();
+	var new_angle = Math.acos(vec_normalized.dot(VVector3v(1, 0, 0)));
+
+	if (vector.angleto)
+	{
+		var othervec = run_vectors[vector.angleto];
+		var othervec_normalized = VVector3(othervec.v1).sub(othervec.v0).normalize();
+
+		var average_vector = VVector3(vector.v1)
 			.sub(vector.v0)
 			.normalize()
-			.add(VVector3v(1, 0, 0))
-			.normalize()
-			.add(vector.v0)
-			.sub(scale)
-	);
+			.add(othervec_normalized)
+			.normalize();
+
+		vector.angle_label.position.copy(
+			VVector3(average_vector)
+				.add(vector.v0)
+				.sub(scale)
+		);
+
+		if (average_vector.x < 0)
+			vector.angle_label.position.add(VVector3v(-1.1, 0, 0).multiplyScalar(vector.angle_label.text_size))
+	}
+	else
+		vector.angle_label.position.copy(
+				VVector3(vector.v1)
+					.sub(vector.v0)
+					.normalize()
+					.add(VVector3v(1, 0, 0))
+					.normalize()
+					.add(vector.v0)
+					.sub(scale)
+			);
 
 	vector.angle_circle.position.copy(vector.v0);
-	vector.angle_xaxis.position.copy(vector.v0);
+	if (vector.angle_xaxis)
+		vector.angle_xaxis.position.copy(vector.v0);
 
-	var new_angle = Math.acos(VVector3(vector.v1).sub(vector.v0).normalize().dot(VVector3v(1, 0, 0)));
+	if (vector.angleto)
+	{
+		var othervec = run_vectors[vector.angleto];
+		var othervec_normalized = VVector3(othervec.v1).sub(othervec.v0).normalize();
+		new_angle = Math.acos(vec_normalized.dot(othervec_normalized));
+	}
+
 	var new_angle_degrees = new_angle * 180 / Math.PI;
 
 	if (shift_down && Math.abs(Math.round(new_angle_degrees) - new_angle_degrees) < 0.1)
 		new_angle_degrees = Math.round(new_angle_degrees);
 
-	if (vector.v1.y - vector.v0.y < 0)
+	if (!vector.angleto && vector.v1.y - vector.v0.y < 0)
 		new_angle_degrees = -new_angle_degrees;
 
 	if (vector.old_angle == null || vector.old_angle != new_angle)
@@ -1255,7 +1412,24 @@ function update_angle_label(vector)
 		vector.angle_label.geometry = new THREE.TextGeometry("angle: " + new_angle_degrees.toFixed(2) + "°", length_text_attr);
 
 		vector.angle_circle.geometry = new THREE.RingGeometry(0.7, 0.75, 30, 1, 0, new_angle);
-		if (vector.v1.y - vector.v0.y < 0)
+
+		if (vector.angleto)
+		{
+			var vec_angle = Math.atan2(vec_normalized.y, vec_normalized.x);
+			var vec2_angle = Math.atan2(othervec_normalized.y, othervec_normalized.x);
+
+			var difference = (vec2_angle - vec_angle);
+			if (difference < -Math.PI)
+				difference += Math.PI * 2;
+			else if (difference > Math.PI)
+				difference -= Math.PI * 2;
+
+			if (difference > 0)
+				vector.angle_circle.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( vec_angle ) );
+			else
+				vector.angle_circle.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( vec_angle + difference ) );
+		}
+		else if (vector.v1.y - vector.v0.y < 0)
 			vector.angle_circle.geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( -new_angle ) );
 	}
 
@@ -1384,23 +1558,6 @@ function render() {
 	for (var k in run_vectors)
 	{
 		var vector = run_vectors[k];
-
-		update_length_label(vector);
-		update_angle_label(vector);
-		update_coords_label(vector);
-
-		if (vector.name_label != undefined && vector.name_label != null)
-		{
-			var scale = VVector3v(1, 0, 0).multiplyScalar(vector.name_label.text_size);
-			vector.name_label.position.copy(
-				VVector3(vector.v1)
-					.sub(VVector3(vector.v0))
-					.multiplyScalar(0.5)
-					.add(vector.v0)
-					.sub(scale)
-					.add(VVector3v(-0.2, 0.2, 0))
-			);
-		}
 
 		if (vector.kill)
 		{
@@ -1571,6 +1728,23 @@ function render() {
 
 		if (arrange)
 			arrangeVVector(k);
+
+		update_length_label(vector);
+		update_angle_label(vector);
+		update_coords_label(vector);
+
+		if (vector.name_label != undefined && vector.name_label != null)
+		{
+			var scale = VVector3v(1, 0, 0).multiplyScalar(vector.name_label.text_size);
+			vector.name_label.position.copy(
+				VVector3(vector.v1)
+					.sub(VVector3(vector.v0))
+					.multiplyScalar(0.5)
+					.add(vector.v0)
+					.sub(scale)
+					.add(VVector3v(-0.2, 0.2, 0))
+			);
+		}
 	}
 
 	if (grid_fade < 1)
@@ -1597,6 +1771,46 @@ function render() {
 		var ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " = " + ratio.toFixed(3) + run_vectors[vector_b_name].name_label_text + "</em></span><br />"
 			+ run_vectors[vector_a_name].name_label_text + " = " + run_vectors[vector_b_name].name_label_text + ".multiplyScalar(" + ratio.toFixed(3) + ");";
+	}
+
+	if (pages[current_page].info_normalize)
+	{
+		var vector_a_name = pages[current_page].info_normalize[1];
+		var vector_b_name = pages[current_page].info_normalize[0];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
+		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " = a · </em>1/|<em>" + run_vectors[vector_b_name].name_label_text + "</em>|</span><br />"
+			+ run_vectors[vector_a_name].name_label_text + " = " + run_vectors[vector_b_name].name_label_text + ".normalize();";
+	}
+
+	if (pages[current_page].info_dot_product)
+	{
+		var vector_a_name = pages[current_page].info_dot_product[0];
+		var vector_b_name = pages[current_page].info_dot_product[1];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var dot = VVector3(vector_a.v0).sub(vector_a.v1).dot(VVector3(vector_b.v0).sub(vector_b.v1));
+		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " · " + run_vectors[vector_b_name].name_label_text + " = " + dot.toFixed(3) + "</em></span><br />"
+			+ run_vectors[vector_a_name].name_label_text + "_dot_" + run_vectors[vector_b_name].name_label_text + " = " + run_vectors[vector_a_name].name_label_text + ".dot(" + run_vectors[vector_b_name].name_label_text + ");";
+	}
+
+	if (pages[current_page].info_dot_product_angle)
+	{
+		var vector_a_name = pages[current_page].info_dot_product_angle[0];
+		var vector_b_name = pages[current_page].info_dot_product_angle[1];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		var vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
+		var vector3_a_length = vector3_a.length();
+		var vector3_b_length = vector3_b.length();
+		var dot = vector3_a.normalize().dot(vector3_b.normalize());
+		var a = run_vectors[vector_a_name].name_label_text;
+		var b = run_vectors[vector_b_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + " · " + b + " = </em>|<em>" + a + "</em>| × |<em>" + b + "</em>| × cos(<em>θ</em>)<br /> = "
+			+ vector3_a_length.toFixed(1) + " × " + vector3_b_length.toFixed(1) + " × " + dot.toFixed(1) + " = " + (vector3_a_length*vector3_b_length*dot).toFixed(3) + "</span><br />"
+			+ a + "_dot_" + b + " = " + a + ".dot(" + b + ");";
 	}
 }
 
