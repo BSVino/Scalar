@@ -596,6 +596,70 @@ function visualvectors_init()
 			info_dot_product: ["green", "red"]
 		},
 
+		// COMPONENTS
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true,
+					fixxprojection: "blue"
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixorigin: true,
+					fixyprojection: "blue"
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					coordinates: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					fixxprojection: "blue",
+					coordinates: true
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					fixyprojection: "blue",
+					coordinates: true
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true,
+					coordinates: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "a.x",
+					notransition: true,
+					fixorigin: true,
+					fixxprojection: "blue",
+					coordinates: true
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					label: "a.y",
+					notransition: true,
+					fixorigin: true,
+					fixyprojection: "blue",
+					coordinates: true
+				}),
+			],
+
+			info_components: "blue"
+		},
+
 		{
 			vectors: [
 			],
@@ -766,6 +830,18 @@ function page_setup(page)
 			parentTransform.remove(v.spritehead);
 			v.spritehead = null;
 		}
+
+		if (v.component_xaxis)
+		{
+			parentTransform.remove(v.component_xaxis);
+			v.component_xaxis = null;
+		}
+
+		if (v.component_yaxis)
+		{
+			parentTransform.remove(v.component_yaxis);
+			v.component_yaxis = null;
+		}
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
@@ -895,6 +971,8 @@ function page_setup(page)
 		v.fixheadsum = init_vectors[i].fixheadsum;
 		v.fixdirection = init_vectors[i].fixdirection;
 		v.fixlength = init_vectors[i].fixlength;
+		v.fixxprojection = init_vectors[i].fixxprojection;
+		v.fixyprojection = init_vectors[i].fixyprojection;
 
 		if ("length" in init_vectors[i])
 		{
@@ -966,10 +1044,10 @@ function page_setup(page)
 			parentTransform.add(v.head_coord_label);
 			v.head_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.head_coord_label.scale.x;
 
-			v.tail_coord_label = new THREE.Mesh( text_geometry, text_material );
+			/*v.tail_coord_label = new THREE.Mesh( text_geometry, text_material );
 			v.tail_coord_label.scale.copy(VVector3v(scale, scale, scale));
 			parentTransform.add(v.tail_coord_label);
-			v.tail_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.tail_coord_label.scale.x;
+			v.tail_coord_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.tail_coord_label.scale.x;*/
 		}
 
 		if ("label" in init_vectors[i])
@@ -1001,6 +1079,34 @@ function page_setup(page)
 		{
 			v.v0 = VVector3(init_v0);
 			v.v1 = VVector3(init_v1);
+		}
+
+		if (v.fixxprojection)
+		{
+			var xaxis_geometry = new THREE.Geometry();
+
+			xaxis_geometry.vertices.push(
+				new THREE.Vector3( 0, 0, 0 ),
+				new THREE.Vector3( 0, 1, 0 )
+			);
+
+			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+			v.component_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
+			parentTransform.add(v.component_xaxis);
+		}
+
+		if (v.fixyprojection)
+		{
+			var yaxis_geometry = new THREE.Geometry();
+
+			yaxis_geometry.vertices.push(
+				new THREE.Vector3( 0, 0, 0 ),
+				new THREE.Vector3( 1, 0, 0 )
+			);
+
+			var yaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+			v.component_yaxis = new THREE.LineSegments(yaxis_geometry, yaxis_material);
+			parentTransform.add(v.component_yaxis);
 		}
 
 		v.kill = false;
@@ -1728,6 +1834,32 @@ function render() {
 			arrange = true;
 		}
 
+		if (vector.fixxprojection)
+		{
+			vector.v1.copy(run_vectors[vector.fixxprojection].v0);
+			vector.v1.setX(run_vectors[vector.fixxprojection].v1.x);
+			vector.v0.copy(run_vectors[vector.fixxprojection].v0);
+
+			vector.component_xaxis.position.copy(vector.v1);
+			vector.component_xaxis.scale.copy(VVector3v(1, 1, 1));
+			vector.component_xaxis.scale.setY(run_vectors[vector.fixxprojection].v1.y - run_vectors[vector.fixxprojection].v0.y);
+
+			arrange = true;
+		}
+
+		if (vector.fixyprojection)
+		{
+			vector.v1.copy(run_vectors[vector.fixyprojection].v0);
+			vector.v1.setY(run_vectors[vector.fixyprojection].v1.y);
+			vector.v0.copy(run_vectors[vector.fixyprojection].v0);
+
+			vector.component_yaxis.position.copy(vector.v1);
+			vector.component_yaxis.scale.copy(VVector3v(1, 1, 1));
+			vector.component_yaxis.scale.setX(run_vectors[vector.fixyprojection].v1.x - run_vectors[vector.fixyprojection].v0.x);
+
+			arrange = true;
+		}
+
 		if (vector.fixorigin)
 		{
 			var transition = false;
@@ -1908,6 +2040,16 @@ function render() {
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + " · " + b + " = </em>|<em>" + a + "</em>| × |<em>" + b + "</em>| × cos(<em>θ</em>)<br /> = "
 			+ vector3_a_length.toFixed(1) + " × " + vector3_b_length.toFixed(1) + " × " + dot.toFixed(1) + " = " + (vector3_a_length*vector3_b_length*dot).toFixed(3) + "</span><br />"
 			+ a + "_dot_" + b + " = " + a + ".dot(" + b + ");";
+	}
+
+	if (pages[current_page].info_components)
+	{
+		var vector_name = pages[current_page].info_components;
+		var vector = run_vectors[vector_name];
+		var vector3 = VVector3(vector.v0).sub(vector.v1);
+		var a = run_vectors[vector_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + "<sub>x</sub> = " + vector3.x.toFixed(3) + "</span><br />"
+			+ a + ".x = " + vector3.x.toFixed(3) + ";<br />";
 	}
 }
 
