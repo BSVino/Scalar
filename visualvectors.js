@@ -25,6 +25,7 @@ var pages;
 var current_page;
 var init_vectors;
 var run_vectors = {};
+var run_matrices = {};
 var raycast_objects = [];
 
 var shift_down = false;
@@ -660,6 +661,79 @@ function visualvectors_init()
 			info_components: "blue"
 		},
 
+		// MATRICES
+		{
+			vectors: [
+			],
+
+			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
+				"<em>A matrix is a transformation</em><br /><br /><br />" +
+				"</span>"
+		},
+
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					nodrag: true,
+					transform: ["green", new THREE.Matrix4().makeBasis(VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(Math.sqrt(2)/2, -Math.sqrt(2)/2, 0), VVector3v(0, 0, 1))]
+				}),
+			],
+
+			info_div: "<span style='font-family: serif'>Rotation by 45°</span>"
+		},
+
+		{
+			vectors: [
+				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+			],
+
+			info_rotation_by: "vx"
+		},
+
+		{
+			matrices: {
+				rotation: [ "vx", "vy" ]
+			},
+
+			vectors: [
+				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "blue_transformed", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					nodrag: true,
+					transform: ["blue", "rotation"]
+				}),
+			],
+
+			info_div: "vector.applyMatrix4(matrix)"
+		},
+
 		{
 			vectors: [
 			],
@@ -770,6 +844,8 @@ function page_setup(page)
 		center_div.innerHTML = pages[page].center_div;
 	else
 		center_div.innerHTML = "";
+
+	run_matrices = pages[page].matrices;
 
 	for (var vname in run_vectors)
 	{
@@ -973,6 +1049,7 @@ function page_setup(page)
 		v.fixlength = init_vectors[i].fixlength;
 		v.fixxprojection = init_vectors[i].fixxprojection;
 		v.fixyprojection = init_vectors[i].fixyprojection;
+		v.transform = init_vectors[i].transform;
 
 		if ("length" in init_vectors[i])
 		{
@@ -1778,6 +1855,42 @@ function render() {
 
 		var arrange = false;
 
+		if (vector.transform && run_vectors[drag_object] != vector)
+		{
+			var transform_vector = run_vectors[vector.transform[0]]
+			if (transform_vector)
+			{
+				var matrix = vector.transform[1];
+				if (typeof(matrix) === 'string')
+				{
+					if (run_matrices && run_matrices[matrix])
+					{
+						var vx = run_vectors[run_matrices[matrix][0]].v1;
+						var vy = run_vectors[run_matrices[matrix][1]].v1;
+						matrix = new THREE.Matrix4().makeBasis(VVector3v(vx.x, vx.y, 0), VVector3v(vy.x, vy.y, 0), VVector3v(0, 0, 1));
+
+						vector.v1.copy(
+							VVector3(transform_vector.v1).sub(transform_vector.v0)
+							.applyMatrix4(matrix)
+							.add(transform_vector.v0)
+						);
+
+						arrange = true;
+					}
+				}
+				else
+				{
+					vector.v1.copy(
+						VVector3(transform_vector.v1).sub(transform_vector.v0)
+						.applyMatrix4(matrix)
+						.add(transform_vector.v0)
+					);
+
+					arrange = true;
+				}
+			}
+		}
+
 		if (vector.fixdirection && run_vectors[drag_object] != vector)
 		{
 			var dir_vector = run_vectors[vector.fixdirection];
@@ -2050,6 +2163,17 @@ function render() {
 		var a = run_vectors[vector_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + "<sub>x</sub> = " + vector3.x.toFixed(3) + "</span><br />"
 			+ a + ".x = " + vector3.x.toFixed(3) + ";<br />";
+	}
+
+	if (pages[current_page].info_rotation_by)
+	{
+		var vector_name = pages[current_page].info_rotation_by;
+		var vector = run_vectors[vector_name];
+		var vector3 = VVector3(vector.v1).sub(vector.v0);
+		var angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
+		var a = run_vectors[vector_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>Rotation by " + angle.toFixed(2) + "°</span><br />"
+			+ "new THREE.Matrix4().makeRotationZ(" + Math.atan2(vector3.y, vector3.x).toFixed(2) + ");<br />";
 	}
 }
 
