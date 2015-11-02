@@ -363,6 +363,90 @@ function visualvectors_init()
 			info_div: "<span style='font-family: serif'><em>c - a = b</em></span><br />b = c.sub(a);"
 		},
 
+		// DISTANCE
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					spritehead: "clyde"
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true,
+					notransition: true,
+					spritehead: "pacman"
+				})
+			],
+		},
+
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					spritehead: "clyde"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					notransition: true,
+					fixbase: "green",
+					fixhead: "blue",
+					nodrag: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true,
+					notransition: true,
+					spritehead: "pacman"
+				})
+			],
+		},
+
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					spritehead: "clyde"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					length: true,
+					notransition: true,
+					fixbase: "green",
+					fixhead: "blue",
+					nodrag: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true,
+					notransition: true,
+					spritehead: "pacman"
+				})
+			],
+		},
+
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					label: "b",
+					length: true,
+					notransition: true,
+					fixbase: "green",
+					fixhead: "blue",
+					nodrag: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "c",
+					fixorigin: true,
+					notransition: true
+				})
+			],
+
+			info_vector_distance: ["green", "blue"]
+		},
+
 		// SCALAR MULTIPLICATION
 		{
 			vectors: [
@@ -1761,6 +1845,19 @@ function render() {
 	}
 
 	renderer.render( scene, camera );
+
+	if (pages[current_page].info_vector_distance)
+	{
+		var vector_a_name = pages[current_page].info_vector_distance[0];
+		var vector_b_name = pages[current_page].info_vector_distance[1];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var distance = TV3_Distance(vector_b.v1, vector_a.v1);
+		var a = run_vectors[vector_a_name].name_label_text;
+		var b = run_vectors[vector_b_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>|<em>" + b + " - " + a + "</em>| = " + distance.toFixed(3) + "</span><br />"
+			+ b + ".sub(" + a + ").length();";
+	}
 
 	if (pages[current_page].info_scalar_multiplication)
 	{
