@@ -60,6 +60,7 @@ function mesh_from_name(name)
 function visualvectors_init()
 {
 	pages = [
+	/*
 		// INTRO
 		{
 			vectors: [
@@ -660,6 +661,7 @@ function visualvectors_init()
 
 			info_components: "blue"
 		},
+		*/
 
 		// MATRICES
 		{
@@ -691,9 +693,28 @@ function visualvectors_init()
 				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					fixlength: 1,
 					fixorigin: true,
+					coordinates: true,
 					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
 				}),
 				VVector({name: "vy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixlength: 1,
+					fixorigin: true,
+					coordinates: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+			],
+		},
+
+		{
+			vectors: [
+				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
 					fixlength: 1,
 					fixorigin: true,
 					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
@@ -701,6 +722,48 @@ function visualvectors_init()
 			],
 
 			info_rotation_by: "vx"
+		},
+
+		{
+			vectors: [
+				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					label: "x",
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					label: "y",
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+			],
+
+			info_general_matrix_construction: ["vx", "vy"]
+		},
+
+		{
+			vectors: [
+				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					label: "x",
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					label: "y",
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+			],
+
+			info_rotation_matrix_construction: "vx"
 		},
 
 		{
@@ -731,7 +794,8 @@ function visualvectors_init()
 				}),
 			],
 
-			info_div: "vector.applyMatrix4(matrix)"
+			info_div: "<span style='font-family: serif'>Mv</span><br />"
+				+ "v.applyMatrix4(M)"
 		},
 
 		{
@@ -1953,9 +2017,12 @@ function render() {
 			vector.v1.setX(run_vectors[vector.fixxprojection].v1.x);
 			vector.v0.copy(run_vectors[vector.fixxprojection].v0);
 
-			vector.component_xaxis.position.copy(vector.v1);
-			vector.component_xaxis.scale.copy(VVector3v(1, 1, 1));
-			vector.component_xaxis.scale.setY(run_vectors[vector.fixxprojection].v1.y - run_vectors[vector.fixxprojection].v0.y);
+			if (vector.component_xaxis)
+			{
+				vector.component_xaxis.position.copy(vector.v1);
+				vector.component_xaxis.scale.copy(VVector3v(1, 1, 1));
+				vector.component_xaxis.scale.setY(run_vectors[vector.fixxprojection].v1.y - run_vectors[vector.fixxprojection].v0.y);
+			}
 
 			arrange = true;
 		}
@@ -1966,9 +2033,12 @@ function render() {
 			vector.v1.setY(run_vectors[vector.fixyprojection].v1.y);
 			vector.v0.copy(run_vectors[vector.fixyprojection].v0);
 
-			vector.component_yaxis.position.copy(vector.v1);
-			vector.component_yaxis.scale.copy(VVector3v(1, 1, 1));
-			vector.component_yaxis.scale.setX(run_vectors[vector.fixyprojection].v1.x - run_vectors[vector.fixyprojection].v0.x);
+			if (vector.component_yaxis)
+			{
+				vector.component_yaxis.position.copy(vector.v1);
+				vector.component_yaxis.scale.copy(VVector3v(1, 1, 1));
+				vector.component_yaxis.scale.setX(run_vectors[vector.fixyprojection].v1.x - run_vectors[vector.fixyprojection].v0.x);
+			}
 
 			arrange = true;
 		}
@@ -2171,6 +2241,28 @@ function render() {
 	if (pages[current_page].info_rotation_by)
 	{
 		var vector_name = pages[current_page].info_rotation_by;
+		var vector = run_vectors[vector_name];
+		var vector3 = VVector3(vector.v1).sub(vector.v0);
+		var angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
+		var a = run_vectors[vector_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>Rotation by " + angle.toFixed(2) + "°</span>";
+	}
+
+	if (pages[current_page].info_general_matrix_construction)
+	{
+		var vector_name_a = pages[current_page].info_general_matrix_construction[0];
+		var vector_name_b = pages[current_page].info_general_matrix_construction[1];
+		var vector_a = run_vectors[vector_name_a];
+		var vector_b = run_vectors[vector_name_b];
+		var a = run_vectors[vector_name_a].name_label_text;
+		var b = run_vectors[vector_name_b].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>M = [" + a + ", " + b + "]</span><br />"
+			+ "new THREE.Matrix4().makeBasis(" + a + ", " + b + ");<br />";
+	}
+
+	if (pages[current_page].info_rotation_matrix_construction)
+	{
+		var vector_name = pages[current_page].info_rotation_matrix_construction;
 		var vector = run_vectors[vector_name];
 		var vector3 = VVector3(vector.v1).sub(vector.v0);
 		var angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
