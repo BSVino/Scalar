@@ -445,7 +445,7 @@ function visualvectors_init()
 				})
 			],
 
-			info_vector_distance: ["green", "blue"]
+			info_vector_distance: ["green", "blue", "red"]
 		},
 
 		// SCALAR MULTIPLICATION
@@ -673,13 +673,13 @@ function visualvectors_init()
 
 		{
 			vectors: [
-				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
 					fixorigin: true
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true,
 					nodrag: true,
-					transform: ["green", new THREE.Matrix4().makeBasis(VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(Math.sqrt(2)/2, -Math.sqrt(2)/2, 0), VVector3v(0, 0, 1))]
+					transform: ["green", new THREE.Matrix4().makeBasis(VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(-Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(0, 0, 1))]
 				}),
 			],
 
@@ -2095,12 +2095,15 @@ function render() {
 	{
 		var vector_a_name = pages[current_page].info_vector_distance[0];
 		var vector_b_name = pages[current_page].info_vector_distance[1];
+		var vector_c_name = pages[current_page].info_vector_distance[2];
 		var vector_a = run_vectors[vector_a_name];
 		var vector_b = run_vectors[vector_b_name];
+		var vector_c = run_vectors[vector_c_name];
 		var distance = TV3_Distance(vector_b.v1, vector_a.v1);
 		var a = run_vectors[vector_a_name].name_label_text;
 		var b = run_vectors[vector_b_name].name_label_text;
-		info_div.innerHTML = "<span style='font-family: serif'>|<em>" + b + " - " + a + "</em>| = " + distance.toFixed(3) + "</span><br />"
+		var c = run_vectors[vector_c_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>|<em>" + c + "</em>| = |<em>" + b + " - " + a + "</em>| = " + distance.toFixed(3) + "</span><br />"
 			+ b + ".sub(" + a + ").length();";
 	}
 
@@ -2159,7 +2162,7 @@ function render() {
 	{
 		var vector_name = pages[current_page].info_components;
 		var vector = run_vectors[vector_name];
-		var vector3 = VVector3(vector.v0).sub(vector.v1);
+		var vector3 = VVector3(vector.v1).sub(vector.v0);
 		var a = run_vectors[vector_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + "<sub>x</sub> = " + vector3.x.toFixed(3) + "</span><br />"
 			+ a + ".x = " + vector3.x.toFixed(3) + ";<br />";
