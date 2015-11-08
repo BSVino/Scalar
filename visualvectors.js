@@ -60,7 +60,6 @@ function mesh_from_name(name)
 function visualvectors_init()
 {
 	pages = [
-	/*
 		// INTRO
 		{
 			vectors: [
@@ -606,10 +605,12 @@ function visualvectors_init()
 				}),
 				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					fixorigin: true,
+					vector_width: 0.5,
 					fixxprojection: "blue"
 				}),
 				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
 					fixorigin: true,
+					vector_width: 0.5,
 					fixyprojection: "blue"
 				}),
 			],
@@ -624,12 +625,14 @@ function visualvectors_init()
 				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					notransition: true,
 					fixorigin: true,
+					vector_width: 0.5,
 					fixxprojection: "blue",
 					coordinates: true
 				}),
 				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
 					notransition: true,
 					fixorigin: true,
+					vector_width: 0.5,
 					fixyprojection: "blue",
 					coordinates: true
 				}),
@@ -645,23 +648,26 @@ function visualvectors_init()
 				}),
 				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					label: "a.x",
+					vector_width: 0.5,
 					notransition: true,
 					fixorigin: true,
 					fixxprojection: "blue",
+					nodrag: true,
 					coordinates: true
 				}),
 				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
 					label: "a.y",
+					vector_width: 0.5,
 					notransition: true,
 					fixorigin: true,
 					fixyprojection: "blue",
+					nodrag: true,
 					coordinates: true
 				}),
 			],
 
 			info_components: "blue"
 		},
-		*/
 
 		// MATRICES
 		{
@@ -672,7 +678,6 @@ function visualvectors_init()
 				"<em>A matrix is a transformation</em><br /><br /><br />" +
 				"</span>"
 		},
-
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
@@ -687,7 +692,6 @@ function visualvectors_init()
 
 			info_div: "<span style='font-family: serif'>Rotation by 45°</span>"
 		},
-
 		{
 			vectors: [
 				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
@@ -704,7 +708,6 @@ function visualvectors_init()
 				}),
 			],
 		},
-
 		{
 			vectors: [
 				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
@@ -723,7 +726,6 @@ function visualvectors_init()
 
 			info_rotation_by: "vx"
 		},
-
 		{
 			vectors: [
 				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
@@ -744,7 +746,6 @@ function visualvectors_init()
 
 			info_general_matrix_construction: ["vx", "vy"]
 		},
-
 		{
 			vectors: [
 				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
@@ -765,7 +766,6 @@ function visualvectors_init()
 
 			info_rotation_matrix_construction: "vx"
 		},
-
 		{
 			matrices: {
 				rotation: [ "vx", "vy" ]
@@ -787,7 +787,7 @@ function visualvectors_init()
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true
 				}),
-				VVector({name: "blue_transformed", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+				VVector({name: "blue_transformed", color: 0x3939E7, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true,
 					nodrag: true,
 					transform: ["blue", "rotation"]
@@ -796,6 +796,208 @@ function visualvectors_init()
 
 			info_div: "<span style='font-family: serif'>Mv</span><br />"
 				+ "v.applyMatrix4(M)"
+		},
+
+		// TRANSFORMING A VECTOR WITH A MATRIX
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixxprojection: "blue"
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixyprojection: "blue"
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixxprojection: "blue",
+					length: true
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixyprojection: "blue",
+					length: true
+				}),
+			],
+		},
+		{
+			matrices: {
+				rotation: [ "vx", "vy" ]
+			},
+
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixxprojection: "blue"
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixyprojection: "blue"
+				}),
+
+				VVector({name: "vx", color: 0xC91818, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x16B51A, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+			],
+
+			info_div: "<span style='font-family: serif'><em>Recipe</em>:<br />1. Find components<br />2. Find lengths</span>"
+		},
+		{
+			matrices: {
+				rotation: [ "vx", "vy" ]
+			},
+
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixxprojection: "blue"
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixyprojection: "blue"
+				}),
+
+				VVector({name: "vx", color: 0xC91818, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x16B51A, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+
+				VVector({name: "vxs", color: 0xC91818, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixorigin: true,
+					transform: ["vx", ["scaleofx", "x"]]
+				}),
+				VVector({name: "vys", color: 0x16B51A, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixorigin: true,
+					transform: ["vy", ["scaleofy", "y"]]
+				}),
+			],
+		},
+		{
+			matrices: {
+				rotation: [ "vx", "vy" ]
+			},
+
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixxprojection: "blue"
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixyprojection: "blue"
+				}),
+
+				VVector({name: "vx", color: 0xC91818, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vy", new THREE.Matrix4().makeBasis(VVector3v(0, -1, 0), VVector3v(1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+				VVector({name: "vy", color: 0x16B51A, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixlength: 1,
+					fixorigin: true,
+					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
+				}),
+
+				VVector({name: "vxs", color: 0xC91818, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixorigin: true,
+					transform: ["vx", ["scaleofx", "x"]]
+				}),
+				VVector({name: "vys", color: 0x16B51A, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixorigin: true,
+					transform: ["vy", ["scaleofy", "y"]]
+				}),
+				VVector({name: "blue_transformed", color: 0x3939E7, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					nodrag: true,
+					transform: ["blue", "rotation"]
+				}),
+			],
 		},
 
 		{
@@ -829,11 +1031,15 @@ function arrangeVVector(k)
 	direction.normalize();
 
 	v.vector.scale.setX(vector_length - 0.25);
+	v.vector.scale.setY(v.vector_width);
+	v.vector.scale.setZ(v.vector_width);
 	v.vector.quaternion.setFromUnitVectors(
 		new THREE.Vector3(1, 0, 0),
 		direction
 	);
 
+	v.vector_head.scale.setY(v.vector_width);
+	v.vector_head.scale.setZ(v.vector_width);
 	v.vector_head.quaternion.setFromUnitVectors(
 		new THREE.Vector3(1, 0, 0),
 		direction
@@ -1114,6 +1320,11 @@ function page_setup(page)
 		v.fixxprojection = init_vectors[i].fixxprojection;
 		v.fixyprojection = init_vectors[i].fixyprojection;
 		v.transform = init_vectors[i].transform;
+
+		if ("vector_width" in init_vectors[i])
+			v.vector_width = init_vectors[i].vector_width;
+		else
+			v.vector_width = 1;
 
 		if ("length" in init_vectors[i])
 		{
@@ -1935,6 +2146,37 @@ function render() {
 
 						vector.v1.copy(
 							VVector3(transform_vector.v1).sub(transform_vector.v0)
+							.applyMatrix4(matrix)
+							.add(transform_vector.v0)
+						);
+
+						arrange = true;
+					}
+				}
+				else if (Array.isArray(matrix))
+				{
+					if (matrix[0] == 'scaleofx')
+					{
+						var scale = run_vectors[matrix[1]].v1.dot(VVector3v(1, 0, 0));
+						matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
+
+						vector.v1.copy(
+							VVector3(transform_vector.v1)
+							.sub(transform_vector.v0)
+							.applyMatrix4(matrix)
+							.add(transform_vector.v0)
+						);
+
+						arrange = true;
+					}
+					else if (matrix[0] == 'scaleofy')
+					{
+						var scale = run_vectors[matrix[1]].v1.dot(VVector3v(0, 1, 0));
+						matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
+
+						vector.v1.copy(
+							VVector3(transform_vector.v1)
+							.sub(transform_vector.v0)
 							.applyMatrix4(matrix)
 							.add(transform_vector.v0)
 						);
