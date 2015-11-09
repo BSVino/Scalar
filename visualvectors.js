@@ -28,6 +28,10 @@ var run_vectors = {};
 var run_matrices = {};
 var raycast_objects = [];
 
+var transform_grid;
+var transform_grid_strong;
+var transform_grid_matrix;
+
 var shift_down = false;
 
 var mesh_mario;
@@ -1000,6 +1004,50 @@ function visualvectors_init()
 			],
 		},
 
+		// SCALING MATRIX
+		{
+			matrices: {
+				scale: [ "sx", "sy" ]
+			},
+
+			vectors: [
+				VVector({name: "sx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true,
+					fixxaxis: true
+				}),
+				VVector({name: "sy", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixorigin: true,
+					fixyaxis: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "blue_transformed", color: 0x3939E7, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					nodrag: true,
+					transform: ["blue", "scale"]
+				}),
+			],
+		},
+
+		// ARBITRARY MATRIX
+		{
+			matrices: {
+				arbitrary: [ "ax", "ay" ]
+			},
+
+			vectors: [
+				VVector({name: "ax", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true
+				}),
+				VVector({name: "ay", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixorigin: true
+				}),
+			],
+
+			transform_grid: "arbitrary"
+		},
+
 		{
 			vectors: [
 			],
@@ -1116,6 +1164,19 @@ function page_setup(page)
 		center_div.innerHTML = "";
 
 	run_matrices = pages[page].matrices;
+
+	transform_grid_matrix = pages[page].transform_grid;
+
+	if (pages[page].transform_grid)
+	{
+		scene.add(transform_grid);
+		scene.add(transform_grid_strong);
+	}
+	else
+	{
+		scene.remove(transform_grid);
+		scene.remove(transform_grid_strong);
+	}
 
 	for (var vname in run_vectors)
 	{
@@ -1320,6 +1381,8 @@ function page_setup(page)
 		v.fixxprojection = init_vectors[i].fixxprojection;
 		v.fixyprojection = init_vectors[i].fixyprojection;
 		v.transform = init_vectors[i].transform;
+		v.fixxaxis = init_vectors[i].fixxaxis;
+		v.fixyaxis = init_vectors[i].fixyaxis;
 
 		if ("vector_width" in init_vectors[i])
 			v.vector_width = init_vectors[i].vector_width;
@@ -1608,6 +1671,9 @@ function init() {
 	grid_strong.position.copy(VVector3v(0, 0, -0.1));
 	scene.add(grid_strong);
 
+	transform_grid = new THREE.LineSegments(grid_geometry, grid_material);
+	transform_grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
+
 	var geometry = new THREE.SphereGeometry( 0.1, 16, 12 );
 	var background_material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
 
@@ -1708,6 +1774,8 @@ function onDocumentMouseMove( event ) {
 		}
 		else if (drag_object_type == "base")
 			run_vectors[drag_object].v0 = world_position;
+
+		run_constraints(run_vectors[drag_object]);
 
 		arrangeVVector(drag_object);
 	}
@@ -2041,6 +2109,267 @@ function update_coords_label(vector)
 	}
 }
 
+function run_constraints(vector)
+{
+	var arrange = false;
+
+	if (vector.transform && run_vectors[drag_object] != vector)
+	{
+		var transform_vector = run_vectors[vector.transform[0]]
+		if (transform_vector)
+		{
+			var matrix = vector.transform[1];
+			if (typeof(matrix) === 'string')
+			{
+				if (run_matrices && run_matrices[matrix])
+				{
+					var vx = run_vectors[run_matrices[matrix][0]].v1;
+					var vy = run_vectors[run_matrices[matrix][1]].v1;
+					matrix = new THREE.Matrix4().makeBasis(vx, vy, VVector3v(0, 0, 1));
+
+					vector.v1.copy(
+						VVector3(transform_vector.v1).sub(transform_vector.v0)
+						.applyMatrix4(matrix)
+						.add(transform_vector.v0)
+					);
+
+					arrange = true;
+				}
+			}
+			else if (Array.isArray(matrix))
+			{
+				if (matrix[0] == 'scaleofx')
+				{
+					var scale = run_vectors[matrix[1]].v1.dot(VVector3v(1, 0, 0));
+					matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
+
+					vector.v1.copy(
+						VVector3(transform_vector.v1)
+						.sub(transform_vector.v0)
+						.applyMatrix4(matrix)
+						.add(transform_vector.v0)
+					);
+
+					arrange = true;
+				}
+				else if (matrix[0] == 'scaleofy')
+				{
+					var scale = run_vectors[matrix[1]].v1.dot(VVector3v(0, 1, 0));
+					matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
+
+					vector.v1.copy(
+						VVector3(transform_vector.v1)
+						.sub(transform_vector.v0)
+						.applyMatrix4(matrix)
+						.add(transform_vector.v0)
+					);
+
+					arrange = true;
+				}
+			}
+			else
+			{
+				vector.v1.copy(
+					VVector3(transform_vector.v1).sub(transform_vector.v0)
+					.applyMatrix4(matrix)
+					.add(transform_vector.v0)
+				);
+
+				arrange = true;
+			}
+		}
+	}
+
+	if (vector.fixdirection && run_vectors[drag_object] != vector)
+	{
+		var dir_vector = run_vectors[vector.fixdirection];
+		if (!dir_vector)
+			console.error("Couldn't find direction vector: " + vector.fixdirection);
+
+		var new_direction = TV3_Direction(dir_vector.v0, dir_vector.v1);
+
+		var center = TV3_Center(vector.v0, vector.v1);
+		var length = TV3_Distance(vector.v0, vector.v1);
+
+		var new_v = VVector3v(1, 0, 0);
+		new_v.applyQuaternion(new_direction);
+		new_v.multiplyScalar(length/2);
+
+		vector.v0 = VVector3(new_v);
+		vector.v0.multiplyScalar(-1);
+		vector.v0.add(center);
+
+		vector.v1 = VVector3(new_v);
+		vector.v1.add(center);
+
+		arrange = true;
+	}
+
+	if (vector.fixlength)
+	{
+		var new_length = vector.fixlength;
+		//var length_vector = run_vectors[vector.fixlength];
+		//if (length_vector)
+		//	new_length = TV3_Distance(length_vector.v0, length_vector.v1);
+
+		var v = VVector3(vector.v1);
+		v.sub(vector.v0);
+
+		var center = VVector3(v);
+		center.multiplyScalar(0.5);
+		center.add(vector.v0);
+
+		v.normalize();
+		v.multiplyScalar(new_length);
+
+		var new_v0 = VVector3(v);
+		new_v0.multiplyScalar(-0.5);
+		new_v0.add(center);
+
+		var new_v1 = VVector3(v);
+		new_v1.multiplyScalar(0.5);
+		new_v1.add(center);
+
+		vector.v0 = new_v0;
+		vector.v1 = new_v1;
+
+		arrange = true;
+	}
+
+	if (vector.fixxprojection)
+	{
+		vector.v1.copy(run_vectors[vector.fixxprojection].v0);
+		vector.v1.setX(run_vectors[vector.fixxprojection].v1.x);
+		vector.v0.copy(run_vectors[vector.fixxprojection].v0);
+
+		if (vector.component_xaxis)
+		{
+			vector.component_xaxis.position.copy(vector.v1);
+			vector.component_xaxis.scale.copy(VVector3v(1, 1, 1));
+			vector.component_xaxis.scale.setY(run_vectors[vector.fixxprojection].v1.y - run_vectors[vector.fixxprojection].v0.y);
+		}
+
+		arrange = true;
+	}
+
+	if (vector.fixyprojection)
+	{
+		vector.v1.copy(run_vectors[vector.fixyprojection].v0);
+		vector.v1.setY(run_vectors[vector.fixyprojection].v1.y);
+		vector.v0.copy(run_vectors[vector.fixyprojection].v0);
+
+		if (vector.component_yaxis)
+		{
+			vector.component_yaxis.position.copy(vector.v1);
+			vector.component_yaxis.scale.copy(VVector3v(1, 1, 1));
+			vector.component_yaxis.scale.setX(run_vectors[vector.fixyprojection].v1.x - run_vectors[vector.fixyprojection].v0.x);
+		}
+
+		arrange = true;
+	}
+
+	if (vector.fixorigin)
+	{
+		var transition = false;
+		for (var t in vector.transitions)
+		{
+			if (vector.transitions[t].type == "center")
+			{
+				transition = true;
+				break;
+			}
+		}
+
+		if (!transition)
+		{
+			vector.v1.sub(vector.v0);
+			vector.v0.copy(VVector3v(0, 0, 0));
+			arrange = true;
+		}
+	}
+
+	if (vector.fixbase)
+	{
+		var base_vector = run_vectors[vector.fixbase];
+		if (base_vector)
+		{
+			vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
+			vector.v0.copy(base_vector.v1);
+
+			arrange = true;
+		}
+	}
+
+	if (vector.fixhead)
+	{
+		var head_vector = run_vectors[vector.fixhead];
+		if (!head_vector)
+			console.error("Couldn't find head vector: " + vector.fixhead);
+
+		vector.v1.copy(head_vector.v1);
+
+		arrange = true;
+	}
+
+	if (vector.fixheadsum)
+	{
+		var sum = VVector3v(0, 0, 0);
+
+		for (var i in vector.fixheadsum)
+		{
+			var term_vector = run_vectors[vector.fixheadsum[i]];
+			if (!term_vector)
+				console.error("Couldn't find head vector: " + vector.fixheadsum[i]);
+
+			sum.add(VVector3(term_vector.v1).sub(term_vector.v0));
+		}
+
+		vector.v1.copy(sum);
+
+		arrange = true;
+	}
+
+	if (vector.fixxaxis)
+	{
+		vector.v0.setY(0);
+		vector.v0.setZ(0);
+		vector.v1.setY(0);
+		vector.v1.setZ(0);
+
+		arrange = true;
+	}
+
+	if (vector.fixyaxis)
+	{
+		vector.v0.setX(0);
+		vector.v0.setZ(0);
+		vector.v1.setX(0);
+		vector.v1.setZ(0);
+
+		arrange = true;
+	}
+
+	for (var j = 0; j < vector.transitions.length; j++)
+	{
+		var transition = vector.transitions[j];
+		var lerp = RemapVal(clock.getElapsedTime(), transition.start_time, transition.end_time, 0, 1);
+
+		if (lerp >= 1)
+		{
+			arrange = true;
+			vector_transition(vector, transition, 1);
+			array_swap_pop(vector.transitions, j);
+			j--;
+			continue;
+		}
+
+		vector_transition(vector, transition, lerp);
+		arrange = true;
+	}
+
+	return arrange;
+}
+
 function render() {
 	dt = clock.getDelta();
 
@@ -2128,247 +2457,13 @@ function render() {
 			}
 		}
 
-		var arrange = false;
-
-		if (vector.transform && run_vectors[drag_object] != vector)
-		{
-			var transform_vector = run_vectors[vector.transform[0]]
-			if (transform_vector)
-			{
-				var matrix = vector.transform[1];
-				if (typeof(matrix) === 'string')
-				{
-					if (run_matrices && run_matrices[matrix])
-					{
-						var vx = run_vectors[run_matrices[matrix][0]].v1;
-						var vy = run_vectors[run_matrices[matrix][1]].v1;
-						matrix = new THREE.Matrix4().makeBasis(VVector3v(vx.x, vx.y, 0), VVector3v(vy.x, vy.y, 0), VVector3v(0, 0, 1));
-
-						vector.v1.copy(
-							VVector3(transform_vector.v1).sub(transform_vector.v0)
-							.applyMatrix4(matrix)
-							.add(transform_vector.v0)
-						);
-
-						arrange = true;
-					}
-				}
-				else if (Array.isArray(matrix))
-				{
-					if (matrix[0] == 'scaleofx')
-					{
-						var scale = run_vectors[matrix[1]].v1.dot(VVector3v(1, 0, 0));
-						matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
-
-						vector.v1.copy(
-							VVector3(transform_vector.v1)
-							.sub(transform_vector.v0)
-							.applyMatrix4(matrix)
-							.add(transform_vector.v0)
-						);
-
-						arrange = true;
-					}
-					else if (matrix[0] == 'scaleofy')
-					{
-						var scale = run_vectors[matrix[1]].v1.dot(VVector3v(0, 1, 0));
-						matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
-
-						vector.v1.copy(
-							VVector3(transform_vector.v1)
-							.sub(transform_vector.v0)
-							.applyMatrix4(matrix)
-							.add(transform_vector.v0)
-						);
-
-						arrange = true;
-					}
-				}
-				else
-				{
-					vector.v1.copy(
-						VVector3(transform_vector.v1).sub(transform_vector.v0)
-						.applyMatrix4(matrix)
-						.add(transform_vector.v0)
-					);
-
-					arrange = true;
-				}
-			}
-		}
-
-		if (vector.fixdirection && run_vectors[drag_object] != vector)
-		{
-			var dir_vector = run_vectors[vector.fixdirection];
-			if (!dir_vector)
-				console.error("Couldn't find direction vector: " + vector.fixdirection);
-
-			var new_direction = TV3_Direction(dir_vector.v0, dir_vector.v1);
-
-			var center = TV3_Center(vector.v0, vector.v1);
-			var length = TV3_Distance(vector.v0, vector.v1);
-
-			var new_v = VVector3v(1, 0, 0);
-			new_v.applyQuaternion(new_direction);
-			new_v.multiplyScalar(length/2);
-
-			vector.v0 = VVector3(new_v);
-			vector.v0.multiplyScalar(-1);
-			vector.v0.add(center);
-
-			vector.v1 = VVector3(new_v);
-			vector.v1.add(center);
-
-			arrange = true;
-		}
-
-		if (vector.fixlength)
-		{
-			var new_length = vector.fixlength;
-			//var length_vector = run_vectors[vector.fixlength];
-			//if (length_vector)
-			//	new_length = TV3_Distance(length_vector.v0, length_vector.v1);
-
-			var v = VVector3(vector.v1);
-			v.sub(vector.v0);
-
-			var center = VVector3(v);
-			center.multiplyScalar(0.5);
-			center.add(vector.v0);
-
-			v.normalize();
-			v.multiplyScalar(new_length);
-
-			var new_v0 = VVector3(v);
-			new_v0.multiplyScalar(-0.5);
-			new_v0.add(center);
-
-			var new_v1 = VVector3(v);
-			new_v1.multiplyScalar(0.5);
-			new_v1.add(center);
-
-			vector.v0 = new_v0;
-			vector.v1 = new_v1;
-
-			arrange = true;
-		}
-
-		if (vector.fixxprojection)
-		{
-			vector.v1.copy(run_vectors[vector.fixxprojection].v0);
-			vector.v1.setX(run_vectors[vector.fixxprojection].v1.x);
-			vector.v0.copy(run_vectors[vector.fixxprojection].v0);
-
-			if (vector.component_xaxis)
-			{
-				vector.component_xaxis.position.copy(vector.v1);
-				vector.component_xaxis.scale.copy(VVector3v(1, 1, 1));
-				vector.component_xaxis.scale.setY(run_vectors[vector.fixxprojection].v1.y - run_vectors[vector.fixxprojection].v0.y);
-			}
-
-			arrange = true;
-		}
-
-		if (vector.fixyprojection)
-		{
-			vector.v1.copy(run_vectors[vector.fixyprojection].v0);
-			vector.v1.setY(run_vectors[vector.fixyprojection].v1.y);
-			vector.v0.copy(run_vectors[vector.fixyprojection].v0);
-
-			if (vector.component_yaxis)
-			{
-				vector.component_yaxis.position.copy(vector.v1);
-				vector.component_yaxis.scale.copy(VVector3v(1, 1, 1));
-				vector.component_yaxis.scale.setX(run_vectors[vector.fixyprojection].v1.x - run_vectors[vector.fixyprojection].v0.x);
-			}
-
-			arrange = true;
-		}
-
-		if (vector.fixorigin)
-		{
-			var transition = false;
-			for (var t in vector.transitions)
-			{
-				if (vector.transitions[t].type == "center")
-				{
-					transition = true;
-					break;
-				}
-			}
-
-			if (!transition)
-			{
-				vector.v1.sub(vector.v0);
-				vector.v0.copy(VVector3v(0, 0, 0));
-				arrange = true;
-			}
-		}
-
-		if (vector.fixbase)
-		{
-			var base_vector = run_vectors[vector.fixbase];
-			if (base_vector)
-			{
-				vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
-				vector.v0.copy(base_vector.v1);
-
-				arrange = true;
-			}
-		}
-
-		if (vector.fixhead)
-		{
-			var head_vector = run_vectors[vector.fixhead];
-			if (!head_vector)
-				console.error("Couldn't find head vector: " + vector.fixhead);
-
-			vector.v1.copy(head_vector.v1);
-
-			arrange = true;
-		}
-
-		if (vector.fixheadsum)
-		{
-			var sum = VVector3v(0, 0, 0);
-
-			for (var i in vector.fixheadsum)
-			{
-				var term_vector = run_vectors[vector.fixheadsum[i]];
-				if (!term_vector)
-					console.error("Couldn't find head vector: " + vector.fixheadsum[i]);
-
-				sum.add(VVector3(term_vector.v1).sub(term_vector.v0));
-			}
-
-			vector.v1.copy(sum);
-
-			arrange = true;
-		}
-
-		for (var j = 0; j < vector.transitions.length; j++)
-		{
-			var transition = vector.transitions[j];
-			var lerp = RemapVal(clock.getElapsedTime(), transition.start_time, transition.end_time, 0, 1);
-
-			if (lerp >= 1)
-			{
-				arrange = true;
-				vector_transition(vector, transition, 1);
-				array_swap_pop(vector.transitions, j);
-				j--;
-				continue;
-			}
-
-			vector_transition(vector, transition, lerp);
-			arrange = true;
-		}
-
-		if (vector.spritehead)
-			vector.spritehead.position.copy(vector.v1);
+		var arrange = run_constraints(vector);
 
 		if (arrange)
 			arrangeVVector(k);
+
+		if (vector.spritehead)
+			vector.spritehead.position.copy(vector.v1);
 
 		update_length_label(vector);
 		update_angle_label(vector);
@@ -2399,6 +2494,20 @@ function render() {
 		grid_fade = 1;
 		grid.material.opacity = grid_strong.material.opacity = grid_fade;
 		grid.material.transparent = grid_strong.material.transparent = false;
+	}
+
+	if (transform_grid_matrix)
+	{
+		var matrix = run_matrices[transform_grid_matrix];
+		var vx = VVector3(run_vectors[matrix[0]].v1).sub(run_vectors[matrix[0]].v0);
+		var vy = VVector3(run_vectors[matrix[1]].v1).sub(run_vectors[matrix[1]].v0);
+
+		var M = new THREE.Matrix4().makeBasis(vx, vy, VVector3v(0, 0, 0));
+		transform_grid.matrix.identity().multiply(M);
+		transform_grid_strong.matrix.identity().multiply(M);
+
+		transform_grid.matrixAutoUpdate = false;
+		transform_grid_strong.matrixAutoUpdate = false;
 	}
 
 	renderer.render( scene, camera );
@@ -2513,4 +2622,3 @@ function render() {
 			+ "new THREE.Matrix4().makeRotationZ(" + Math.atan2(vector3.y, vector3.x).toFixed(2) + ");<br />";
 	}
 }
-
