@@ -520,12 +520,12 @@ function visualvectors_init()
 		// DOT PRODUCT
 		{
 			vectors: [
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					fixorigin: true
+				}),
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					fixorigin: true,
 					angleto: "red"
-				}),
-				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
-					fixorigin: true
 				}),
 			],
 		},
@@ -599,6 +599,17 @@ function visualvectors_init()
 			],
 
 			info_dot_product: ["green", "red"]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					label: "a"
+				}),
+			],
+
+			info_dot_product_lengthsqr: "green"
 		},
 
 		// COMPONENTS
@@ -735,6 +746,48 @@ function visualvectors_init()
 					notransition: true
 				}),
 			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 2, 0),
+					label: "a",
+					fixorigin: true
+				}),
+				VVector({name: "green", color: 0x39E73D, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
+					label: "b",
+					fixorigin: true
+				}),
+				VVector({name: "shadow", color: 0x0, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					vector_width: 0.5,
+					fixprojection: ["blue", "green"],
+					nodrag: true,
+					notransition: true
+				}),
+			],
+
+			info_dot_product_projection: ["blue", "green"]
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 2, 0),
+					label: "a",
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "green", color: 0x39E73D, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
+					label: "b",
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "shadow", color: 0x0, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					vector_width: 0.5,
+					fixprojection: ["blue", "green"],
+					nodrag: true,
+					notransition: true
+				}),
+			],
+
+			info_projection: ["blue", "green"]
 		},
 
 		// MATRICES
@@ -2712,6 +2765,19 @@ function render() {
 			+ a + "_dot_" + b + " = " + a + ".dot(" + b + ");";
 	}
 
+	if (pages[current_page].info_dot_product_lengthsqr)
+	{
+		var vector_a_name = pages[current_page].info_dot_product_lengthsqr;
+		var vector_a = run_vectors[vector_a_name];
+		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		var vector3_a_length = vector3_a.length();
+		var dot = vector3_a.normalize().dot(vector3_a.normalize());
+		var a = run_vectors[vector_a_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + " · " + a + " = </em>|<em>" + a + "</em>| × |<em>" + a + "</em>| × cos(<em>θ</em>)<br /> = "
+			+ vector3_a_length.toFixed(1) + " × " + vector3_a_length.toFixed(1) + " × " + dot.toFixed(1) + " = " + (vector3_a_length*vector3_a_length*dot).toFixed(3) + "</span><br />"
+			+ "length_" + a + "_sqr = " + a + ".dot(" + a + ");";
+	}
+
 	if (pages[current_page].info_components)
 	{
 		var vector_name = pages[current_page].info_components;
@@ -2720,6 +2786,39 @@ function render() {
 		var a = run_vectors[vector_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + "<sub>x</sub> = " + vector3.x.toFixed(3) + "</span><br />"
 			+ a + ".x = " + vector3.x.toFixed(3) + ";<br />";
+	}
+
+	if (pages[current_page].info_dot_product_projection)
+	{
+		var vector_a_name = pages[current_page].info_dot_product_projection[0];
+		var vector_b_name = pages[current_page].info_dot_product_projection[1];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		var vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
+		var dot = vector3_a.dot(vector3_b);
+		var vector3_a_length = vector3_a.length();
+		var vector3_b_length = vector3_b.length();
+		var dot_normalized = vector3_a.normalize().dot(vector3_b.normalize());
+		var a = run_vectors[vector_a_name].name_label_text;
+		var b = run_vectors[vector_b_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>(<em>" + a + "</em> · <em>" + b + "</em>) <em>" + b + " = </em>(" + dot.toFixed(2) + ") <em>" + b + "</em><br /><br />";
+	}
+
+	if (pages[current_page].info_projection)
+	{
+		var vector_a_name = pages[current_page].info_projection[0];
+		var vector_b_name = pages[current_page].info_projection[1];
+		var vector_a = run_vectors[vector_a_name];
+		var vector_b = run_vectors[vector_b_name];
+		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		var vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
+		var dot = vector3_a.dot(vector3_b) / vector3_b.dot(vector3_b);
+		var vector3_a_length = vector3_a.length();
+		var vector3_b_length = vector3_b.length();
+		var a = run_vectors[vector_a_name].name_label_text;
+		var b = run_vectors[vector_b_name].name_label_text;
+		info_div.innerHTML = "<span style='font-family: serif'>(<em>" + a + "</em> · <em>" + b + "</em> / <em>" + b + "</em> · <em>" + b + "</em>) <em>" + b + "</em> = </em>(" + dot.toFixed(2) + ") <em>" + b + "</em><br /><br />";
 	}
 
 	if (pages[current_page].info_rotation_by)
