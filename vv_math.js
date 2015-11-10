@@ -69,8 +69,8 @@ function toScreenPosition(vector, camera)
 {
 	var result = VVector3(vector);
 
-	var widthHalf = 0.25*renderer.context.canvas.width;
-	var heightHalf = 0.25*renderer.context.canvas.height;
+	var widthHalf = renderer.context.canvas.width*0.5/window.devicePixelRatio;
+	var heightHalf = renderer.context.canvas.height*0.5/window.devicePixelRatio;
 
 	result.project(camera);
 
@@ -84,8 +84,8 @@ function fromScreenPosition(vector, camera)
 {
 	var result = VVector3(vector);
 
-	var widthHalf = 0.25*renderer.context.canvas.width;
-	var heightHalf = 0.25*renderer.context.canvas.height;
+	var widthHalf = renderer.context.canvas.width*0.5/window.devicePixelRatio;
+	var heightHalf = renderer.context.canvas.height*0.5/window.devicePixelRatio;
 
 	result.x = (result.x - widthHalf) / widthHalf;
 	result.y = -(result.y - heightHalf) / heightHalf;
