@@ -70,7 +70,8 @@ function visualvectors_init()
 			],
 
 			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
-				"<em>Visual Vectors</em><br /><br /><br />" +
+				"<em>Visual Vectors</em><br />" +
+				"by Jorge Rodriguez<br /><br />" +
 				"Follow along at<br />" +
 				"<em>http://vinoisnotouzo.com/vv</em><br />" +
 				"</span>"
