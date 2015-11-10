@@ -1118,8 +1118,9 @@ function visualvectors_init()
 
 			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
 				"<em>Questions</em><br /><br /><br />" +
-				"<em>http://vinoisnotouzo.com/vv</em><br /><br />" +
-				"<em><span style='font-size: small'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens</span>" +
+				"<em>http://vinoisnotouzo.com/vv</em><br /><br /><br />" +
+				"<em><span style='font-size: 24px'>Arithmetical symbols are written diagrams<br /> and geometrical figures are graphic formulas.<br/>- David Hilbert<br /><br /><br /></span></em>" +
+				"<em><span style='font-size: 24px'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens<br /></em>" +
 				"</span>"
 		},
 	];
