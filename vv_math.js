@@ -44,6 +44,16 @@ function TV3_Direction(v0, v1)
 	);
 }
 
+function TV3_NearestPointOnLine(p, v0, v1)
+{
+	var v = VVector3(v1).sub(v0);
+	var w = VVector3(p).sub(v0);
+
+	w.projectOnVector(v);
+
+	return VVector3(v0).add(w);
+}
+
 function VTransition(type, start_value, end_value, start_time, end_time)
 {
 	return {type, start_value, end_value, start_time, end_time};

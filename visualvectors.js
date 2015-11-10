@@ -673,6 +673,70 @@ function visualvectors_init()
 			info_components: "blue"
 		},
 
+		// VECTOR PROJECTION
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "shadow", color: 0x0, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					vector_width: 0.5,
+					notransition: true,
+					fixorigin: true,
+					fixxprojection: "blue",
+					nodrag: true
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "green", color: 0x39E73D, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 1, 0),
+					fixorigin: true
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "green", color: 0x39E73D, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 1, 0),
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "shadow", color: 0x0, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					vector_width: 0.5,
+					fixprojection: ["blue", "green"],
+					nodrag: true
+				}),
+			],
+		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "green", color: 0x39E73D, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 1, 0),
+					angleto: "blue",
+					fixorigin: true,
+					notransition: true
+				}),
+				VVector({name: "shadow", color: 0x0, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					vector_width: 0.5,
+					fixprojection: ["blue", "green"],
+					nodrag: true,
+					notransition: true
+				}),
+			],
+		},
+
 		// MATRICES
 		{
 			vectors: [
@@ -1249,6 +1313,18 @@ function page_setup(page)
 			parentTransform.remove(v.component_yaxis);
 			v.component_yaxis = null;
 		}
+
+		if (v.projection_v0)
+		{
+			parentTransform.remove(v.projection_v0);
+			v.projection_v0 = null;
+		}
+
+		if (v.projection_v1)
+		{
+			parentTransform.remove(v.projection_v1);
+			v.projection_v1 = null;
+		}
 	}
 
 	for ( var i = 0; i < init_vectors.length; i ++ )
@@ -1383,6 +1459,7 @@ function page_setup(page)
 		v.transform = init_vectors[i].transform;
 		v.fixxaxis = init_vectors[i].fixxaxis;
 		v.fixyaxis = init_vectors[i].fixyaxis;
+		v.fixprojection = init_vectors[i].fixprojection;
 
 		if ("vector_width" in init_vectors[i])
 			v.vector_width = init_vectors[i].vector_width;
@@ -1494,6 +1571,24 @@ function page_setup(page)
 		{
 			v.v0 = VVector3(init_v0);
 			v.v1 = VVector3(init_v1);
+		}
+
+		if (v.fixprojection)
+		{
+			var xaxis_geometry = new THREE.Geometry();
+
+			xaxis_geometry.vertices.push(
+				new THREE.Vector3( 0, 0, 0 ),
+				new THREE.Vector3( 1, 0, 0 )
+			);
+
+			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+
+			v.projection_v0 = new THREE.LineSegments(xaxis_geometry, xaxis_material);
+			parentTransform.add(v.projection_v0);
+
+			v.projection_v1 = new THREE.LineSegments(xaxis_geometry, xaxis_material);
+			parentTransform.add(v.projection_v1);
 		}
 
 		if (v.fixxprojection)
@@ -2232,6 +2327,43 @@ function run_constraints(vector)
 
 		vector.v0 = new_v0;
 		vector.v1 = new_v1;
+
+		arrange = true;
+	}
+
+	if (vector.fixprojection)
+	{
+		var original_vector = run_vectors[vector.fixprojection[0]];
+		var projection_vector = run_vectors[vector.fixprojection[1]];
+
+		vector.v0.copy(TV3_NearestPointOnLine(original_vector.v0, projection_vector.v0, projection_vector.v1));
+		vector.v0.setZ(0.1);
+		vector.v1.copy(TV3_NearestPointOnLine(original_vector.v1, projection_vector.v0, projection_vector.v1));
+		vector.v1.setZ(0.1);
+
+		if (vector.projection_v0)
+		{
+			var xaxis_geometry = new THREE.Geometry();
+
+			xaxis_geometry.vertices.push(
+				VVector3(vector.v0),
+				VVector3(original_vector.v0)
+			);
+
+			vector.projection_v0.geometry = xaxis_geometry;
+		}
+
+		if (vector.projection_v1)
+		{
+			var xaxis_geometry = new THREE.Geometry();
+
+			xaxis_geometry.vertices.push(
+				VVector3(vector.v1),
+				VVector3(original_vector.v1)
+			);
+
+			vector.projection_v1.geometry = xaxis_geometry;
+		}
 
 		arrange = true;
 	}
