@@ -114,7 +114,9 @@ function visualvectors_init()
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0)}),
-			]
+			],
+
+			info_div: "new THREE.Vector3()"
 		},
 		{
 			vectors: [
@@ -453,6 +455,10 @@ function visualvectors_init()
 			info_vector_distance: ["green", "blue", "red"]
 		},
 
+		{
+			center_div: "<br /><br /><br /><span style='font-family: serif'><em>Questions?</em></span>"
+		},
+
 		// SCALAR MULTIPLICATION
 		{
 			vectors: [
@@ -622,11 +628,13 @@ function visualvectors_init()
 				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					fixorigin: true,
 					vector_width: 0.5,
+					nodrag: true,
 					fixxprojection: "blue"
 				}),
 				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
 					fixorigin: true,
 					vector_width: 0.5,
+					nodrag: true,
 					fixyprojection: "blue"
 				}),
 			],
@@ -643,6 +651,7 @@ function visualvectors_init()
 					fixorigin: true,
 					vector_width: 0.5,
 					fixxprojection: "blue",
+					nodrag: true,
 					coordinates: true
 				}),
 				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
@@ -650,6 +659,7 @@ function visualvectors_init()
 					fixorigin: true,
 					vector_width: 0.5,
 					fixyprojection: "blue",
+					nodrag: true,
 					coordinates: true
 				}),
 			],
@@ -789,6 +799,10 @@ function visualvectors_init()
 			],
 
 			info_projection: ["blue", "green"]
+		},
+
+		{
+			center_div: "<br /><br /><br /><span style='font-family: serif'><em>Questions?</em></span>"
 		},
 
 		// MATRICES
@@ -1282,6 +1296,8 @@ function page_setup(page)
 	else
 		center_div.innerHTML = "";
 
+	pagenumber_div.innerHTML = "" + (page+1);
+
 	run_matrices = pages[page].matrices;
 
 	transform_grid_matrix = pages[page].transform_grid;
@@ -1721,6 +1737,7 @@ function page_advance()
 
 var info_div;
 var center_div;
+var pagenumber_div;
 
 function init() {
 	container = document.createElement( 'div' );
@@ -1747,6 +1764,16 @@ function init() {
 	container.appendChild( center );
 
 	center_div = center;
+
+	pagenumber_div = document.createElement( 'div' );
+	pagenumber_div.style.position = 'absolute';
+	pagenumber_div.style.bottom = '20px';
+	pagenumber_div.style.right = '20px';
+	pagenumber_div.style.width = '100%';
+	pagenumber_div.style.textAlign = 'right';
+	pagenumber_div.style.fontSize = "24px";
+	pagenumber_div.innerHTML = '';
+	container.appendChild( pagenumber_div );
 
 	var width = window.innerWidth;
 	var height = window.innerHeight;
