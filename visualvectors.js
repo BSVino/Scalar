@@ -1248,7 +1248,7 @@ var length_text_attr = {
 	size: 60,
 	height: 0,
 	curveSegments: 3,
-	font: 'droid sans',
+	font: 'droid serif',
 	weight: 'normal',
 	bevelEnabled: false
 };
@@ -1257,7 +1257,7 @@ var angle_text_attr = {
 	size: 60,
 	height: 0,
 	curveSegments: 3,
-	font: 'droid sans',
+	font: 'droid serif',
 	weight: 'normal',
 	bevelEnabled: false
 };
