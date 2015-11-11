@@ -476,10 +476,12 @@ function visualvectors_init()
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
 					fixdirection: "red",
+					show_multiples: "red",
 					length: true
 				}),
 				VVector({name: "red", color: 0x690D0D, v0: VVector3v(2, 1, 0), v1: VVector3v(2, 2, 0),
 					length: true,
+					show_multiples: "green",
 					fixdirection: "green"
 				}),
 			],
@@ -1491,6 +1493,7 @@ function page_setup(page)
 
 			v = run_vectors[vname] = {};
 			v.transitions = [];
+			v.multiples = [];
 			v.vector = vector;
 			v.vector_head = vector_head;
 			v.vector_handle = vector_handle;
@@ -1531,6 +1534,7 @@ function page_setup(page)
 		v.fixxaxis = init_vectors[i].fixxaxis;
 		v.fixyaxis = init_vectors[i].fixyaxis;
 		v.fixprojection = init_vectors[i].fixprojection;
+		v.show_multiples = init_vectors[i].show_multiples;
 
 		if ("vector_width" in init_vectors[i])
 			v.vector_width = init_vectors[i].vector_width;
@@ -2682,6 +2686,78 @@ function render() {
 		update_length_label(vector);
 		update_angle_label(vector);
 		update_coords_label(vector);
+
+		if (vector.show_multiples)
+		{
+			var vector_length = VVector3(vector.v1).sub(vector.v0).length();
+
+			var other_vector = run_vectors[vector.show_multiples];
+			var other_vector_length = VVector3(other_vector.v1).sub(other_vector.v0).length();
+
+			var num_multiples = Math.floor(vector_length/other_vector_length);
+
+			while (vector.multiples.length > num_multiples)
+			{
+				var last_multiple = vector.multiples[vector.multiples.length-1];
+				parentTransform.remove(last_multiple.body);
+				parentTransform.remove(last_multiple.head);
+				vector.multiples.pop();
+			}
+
+			var arrow_material = new THREE.MeshBasicMaterial( { color: other_vector.vector.material.color } );
+
+			while (vector.multiples.length < num_multiples)
+			{
+				var multiple = {
+					body: new THREE.Mesh( vector_geometry, arrow_material ),
+					head: new THREE.Mesh( head_geometry, arrow_material )
+				};
+
+				parentTransform.add(multiple.body);
+				parentTransform.add(multiple.head);
+				vector.multiples.push(multiple);
+			}
+
+			var vec_start = VVector3(vector.v0);
+			var vec_direction = VVector3(vector.v1).sub(vector.v0).normalize().multiplyScalar(other_vector_length);
+
+			for (var k = 0; k < vector.multiples.length; k++)
+			{
+				vector.multiples[k].body.position.copy(vec_start);
+				vector.multiples[k].body.position.setZ(0.1);
+				vector.multiples[k].head.position.copy(VVector3(vec_start).add(vec_direction));
+				vector.multiples[k].head.position.setZ(0.1);
+
+				var direction = VVector3(vector.v1).sub(vector.v0).normalize();
+
+				vector.multiples[k].body.scale.setX(other_vector_length - 0.25);
+				vector.multiples[k].body.scale.setY(0.5);
+				vector.multiples[k].body.scale.setZ(0.5);
+				vector.multiples[k].body.quaternion.setFromUnitVectors(
+					new THREE.Vector3(1, 0, 0),
+					direction
+				);
+
+				vector.multiples[k].head.scale.setY(1.2);
+				vector.multiples[k].head.scale.setZ(1.2);
+				vector.multiples[k].head.quaternion.setFromUnitVectors(
+					new THREE.Vector3(1, 0, 0),
+					direction
+				);
+
+				vec_start.add(vec_direction);
+			}
+		}
+		else
+		{
+			while (vector.multiples.length)
+			{
+				var last_multiple = vector.multiples[vector.multiples.length-1];
+				parentTransform.remove(last_multiple.body);
+				parentTransform.remove(last_multiple.head);
+				vector.multiples.pop();
+			}
+		}
 
 		if (vector.name_label != undefined && vector.name_label != null)
 		{
