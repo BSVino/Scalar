@@ -469,9 +469,11 @@ function visualvectors_init()
 			info_vector_distance: ["green", "blue", "red"]
 		},
 
+		/*
 		{
 			center_div: "<br /><br /><br /><span style='font-family: serif'><em>Questions?</em></span>"
 		},
+		*/
 
 		// SCALAR MULTIPLICATION
 		{
@@ -519,6 +521,7 @@ function visualvectors_init()
 			info_scalar_multiplication: ["green", "red"]
 		},
 
+/*
 		// NORMALIZING
 		{
 			vectors: [
@@ -539,6 +542,7 @@ function visualvectors_init()
 
 			info_normalize: ["green", "red"]
 		},
+*/
 
 		// DOT PRODUCT
 		{
@@ -570,6 +574,24 @@ function visualvectors_init()
 			info_dot_product: ["green", "red"]
 		},
 		{
+			center_div: "<br /><br /><br /><span style='font-family: serif'><em>a · b = </em>|<em>a</em>| × |<em>b</em>| × cos(<em>θ</em>)</span>",
+
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					label: "a",
+					length: true
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					label: "b",
+					length: true
+				}),
+			],
+		},
+		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					notransition: true,
@@ -605,6 +627,8 @@ function visualvectors_init()
 
 			info_dot_product_angle: ["green", "red"]
 		},
+
+		/*
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
@@ -616,6 +640,7 @@ function visualvectors_init()
 
 			info_dot_product_lengthsqr: "green"
 		},
+		*/
 
 		// COMPONENTS
 		{
@@ -667,8 +692,7 @@ function visualvectors_init()
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					label: "a",
 					notransition: true,
-					fixorigin: true,
-					coordinates: true
+					fixorigin: true
 				}),
 				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					label: "a.x",
@@ -676,8 +700,7 @@ function visualvectors_init()
 					notransition: true,
 					fixorigin: true,
 					fixxprojection: "blue",
-					nodrag: true,
-					coordinates: true
+					nodrag: true
 				}),
 				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
 					label: "a.y",
@@ -685,14 +708,41 @@ function visualvectors_init()
 					notransition: true,
 					fixorigin: true,
 					fixyprojection: "blue",
-					nodrag: true,
-					coordinates: true
+					nodrag: true
 				}),
 			],
 
 			info_components: "blue"
 		},
+		{
+			vectors: [
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					label: "a",
+					notransition: true,
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					label: "a.x",
+					vector_width: 0.5,
+					notransition: true,
+					fixorigin: true,
+					fixxprojection: "blue",
+					nodrag: true
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					label: "a.y",
+					vector_width: 0.5,
+					notransition: true,
+					fixorigin: true,
+					fixyprojection: "blue",
+					nodrag: true
+				}),
+			],
 
+			info_div: "<span style='font-family: serif'><em>a.x</em> + <em>a.y</em> = <em>a</em></span>"
+		},
+
+/*
 		// VECTOR PROJECTION
 		{
 			vectors: [
@@ -798,6 +848,7 @@ function visualvectors_init()
 
 			info_projection: ["blue", "green"]
 		},
+		*/
 
 		{
 			center_div: "<br /><br /><br /><span style='font-family: serif'><em>Questions?</em></span>"
@@ -817,7 +868,7 @@ function visualvectors_init()
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
 					fixorigin: true
 				}),
-				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(Math.sqrt(2), Math.sqrt(2), 0),
 					fixorigin: true,
 					nodrag: true,
 					transform: ["green", new THREE.Matrix4().makeBasis(VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(-Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(0, 0, 1))]
@@ -1134,6 +1185,7 @@ function visualvectors_init()
 			],
 		},
 
+/*
 		// SCALING MATRIX
 		{
 			matrices: {
@@ -1177,7 +1229,14 @@ function visualvectors_init()
 
 			transform_grid: "arbitrary"
 		},
+		*/
 
+		{
+			vectors: [
+			],
+
+			center_div: "<br /><br /><br /><span style='font-family: serif'><em>A word of warning</em></span>"
+		},
 		{
 			vectors: [
 			],
