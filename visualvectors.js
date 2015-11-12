@@ -162,6 +162,20 @@ function visualvectors_init()
 					notransition: true,
 					spritehead: "mario"
 				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+				})
+			]
+		},
+		{
+			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					spritehead: "mario"
+				}),
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
+					fixbase: "green"
+				})
 			]
 		},
 		{
@@ -596,24 +610,6 @@ function visualvectors_init()
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
 					notransition: true,
 					fixorigin: true,
-					fixlength: 1,
-					label: "a"
-				}),
-				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(-1, 0, 0),
-					notransition: true,
-					fixorigin: true,
-					fixlength: 1,
-					label: "b"
-				}),
-			],
-
-			info_dot_product: ["green", "red"]
-		},
-		{
-			vectors: [
-				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
-					notransition: true,
-					fixorigin: true,
 					label: "a"
 				}),
 			],
@@ -821,7 +817,7 @@ function visualvectors_init()
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
 					fixorigin: true
 				}),
-				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0),
 					fixorigin: true,
 					nodrag: true,
 					transform: ["green", new THREE.Matrix4().makeBasis(VVector3v(Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(-Math.sqrt(2)/2, Math.sqrt(2)/2, 0), VVector3v(0, 0, 1))]
