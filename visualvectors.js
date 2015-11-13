@@ -884,6 +884,14 @@ function visualvectors_init()
 		},
 		{
 			vectors: [
+				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(2, 0, 0),
+					fixorigin: true,
+					spriterot: "pacman"
+				}),
+			],
+		},
+		{
+			vectors: [
 				VVector({name: "vx", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
 					fixlength: 1,
 					fixorigin: true,
@@ -1489,6 +1497,12 @@ function page_setup(page)
 			v.spritehead = null;
 		}
 
+		if (v.spriterot)
+		{
+			parentTransform.remove(v.spriterot);
+			v.spriterot = null;
+		}
+
 		if (v.component_xaxis)
 		{
 			parentTransform.remove(v.component_xaxis);
@@ -1821,6 +1835,12 @@ function page_setup(page)
 		{
 			v.spritehead = mesh_from_name(init_vectors[i].spritehead);
 			parentTransform.add(v.spritehead);
+		}
+
+		if ("spriterot" in init_vectors[i])
+		{
+			v.spriterot = mesh_from_name(init_vectors[i].spriterot);
+			parentTransform.add(v.spriterot);
 		}
 
 		arrangeVVector(init_vectors[i].name);
@@ -2836,6 +2856,12 @@ function render() {
 
 		if (vector.spritehead)
 			vector.spritehead.position.copy(vector.v1);
+
+		if (vector.spriterot)
+		{
+			vector.spriterot.position.copy(vector.v0);
+			vector.spriterot.quaternion.copy(TV3_Direction(vector.v0, vector.v1));
+		}
 
 		update_length_label(vector);
 		update_angle_label(vector);
