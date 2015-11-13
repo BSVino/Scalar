@@ -1,5 +1,6 @@
 var container, stats;
 var camera, scene, raycaster, renderer, parentTransform, sphereInter;
+var rotate_sphere, rotating = false, rotate_mouse_start_x, rotate_mouse_start_y, rotate_horizontal = 0, rotate_vertical = 0;
 
 var mouse = new THREE.Vector2();
 var radius = 100;
@@ -69,9 +70,10 @@ function visualvectors_init()
 			vectors: [
 			],
 
+			hide_rotate: true,
 			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
 				"<em>Visual Vectors</em><br />" +
-				"by Jorge Rodriguez<br /><br />" +
+				"by Jorge Rodriguez @VinoBS<br /><br />" +
 				"Follow along at<br />" +
 				"<em>http://vinoisnotouzo.com/vv</em><br />" +
 				"</span>"
@@ -80,6 +82,7 @@ function visualvectors_init()
 			vectors: [
 			],
 
+			hide_rotate: true,
 			center_div: "<br /><br /><br /><br /><span style='font-family: serif'>" +
 				"A 2D location:<br />" +
 				"(x, y)<br />" +
@@ -89,6 +92,7 @@ function visualvectors_init()
 			vectors: [
 			],
 
+			hide_rotate: true,
 			center_div: "<span style='font-family: serif'>" +
 				"A <em>vector</em> is an object<br />" +
 				"defined by an ordered set of components<br />" +
@@ -104,6 +108,7 @@ function visualvectors_init()
 			vectors: [
 			],
 
+			hide_rotate: true,
 			center_div: "<br /><br /><br /><br /><span style='font-family: serif'>" +
 				"How Albert Einstein thought about physics:<br /><br />" +
 				"<em>\"I have sensations of a kinesthetic or muscular type.\"</em><br /><br />" +
@@ -892,6 +897,8 @@ function visualvectors_init()
 					transform: ["vx", new THREE.Matrix4().makeBasis(VVector3v(0, 1, 0), VVector3v(-1, 0, 0), VVector3v(0, 0, 1))]
 				}),
 			],
+
+			info_div: "<span style='font-family: serif'><em>Basis Vectors</em></span>"
 		},
 		{
 			vectors: [
@@ -1069,7 +1076,7 @@ function visualvectors_init()
 				}),
 			],
 
-			info_div: "<span style='font-family: serif'><em>Recipe</em>:<br />1. Find components<br />2. Find lengths</span>"
+			info_div: "<span style='font-family: serif'><em>Recipe</em>:<br />1. Apply lengths<br />2. Add components</span>"
 		},
 		{
 			matrices: {
@@ -1229,6 +1236,56 @@ function visualvectors_init()
 
 			transform_grid: "arbitrary"
 		},
+
+		{
+			matrices: {
+				arbitrary: [ "ax", "ay" ]
+			},
+
+			vectors: [
+				VVector({name: "ax", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					fixorigin: true
+				}),
+				VVector({name: "ay", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true
+				}),
+				VVector({name: "x", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixxprojection: "blue"
+				}),
+				VVector({name: "y", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					fixorigin: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixyprojection: "blue"
+				}),
+				VVector({name: "vxs", color: 0xC91818, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
+					notransition: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixorigin: true,
+					transform: ["ax", ["scaleofx", "x"]]
+				}),
+				VVector({name: "vys", color: 0x16B51A, v0: VVector3v(0, 0, 0), v1: VVector3v(0, 1, 0),
+					notransition: true,
+					nodrag: true,
+					vector_width: 0.5,
+					fixorigin: true,
+					transform: ["ay", ["scaleofy", "y"]]
+				}),
+				VVector({name: "blue_transformed", color: 0x3939E7, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
+					fixorigin: true,
+					nodrag: true,
+					transform: ["blue", "arbitrary"]
+				}),
+			],
 		*/
 
 		{
@@ -1242,10 +1299,10 @@ function visualvectors_init()
 			],
 
 			center_div: "<br /><br /><br /><span style='font-family: serif'>" +
-				"<em>Questions</em><br /><br /><br />" +
+				"<em>Questions</em><br /><span style='font-size: 20px'>@VinoBS bs.vino@gmail.com</span><br /><br />" +
 				"<em>http://vinoisnotouzo.com/vv</em><br /><br /><br />" +
 				"<em><span style='font-size: 24px'>Arithmetical symbols are written diagrams<br /> and geometrical figures are graphic formulas.<br/>- David Hilbert<br /><br /><br /></span></em>" +
-				"<em><span style='font-size: 24px'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens<br />Qamar Farooqui</em>" +
+				"<em><span style='font-size: 24px'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens<br />Qamar Farooqui, Andrea Greenberg, Pax Kivimae</em>" +
 				"</span>"
 		},
 	];
@@ -1352,6 +1409,8 @@ function page_setup(page)
 		center_div.innerHTML = pages[page].center_div;
 	else
 		center_div.innerHTML = "";
+
+	rotate_sphere.visible = !("hide_rotate" in pages[page]);
 
 	pagenumber_div.innerHTML = "" + (page+1);
 
@@ -1843,6 +1902,21 @@ function init() {
 
 	scene = new THREE.Scene();
 
+	var light = new THREE.AmbientLight( 0xfff4d4 );
+	scene.add( light );
+
+	var light = new THREE.PointLight( 0xffffff, 1, 100 );
+	light.position.set( -4, -2, 2 );
+	scene.add( light );
+
+	rotate_sphere_geometry = new THREE.SphereGeometry(0.3, 30, 20);
+	var sphere_material = new THREE.MeshLambertMaterial( { color: 0x757263, transparent: true, opacity: 0.5 } );
+	rotate_sphere = new THREE.Mesh( rotate_sphere_geometry, sphere_material );
+	rotate_sphere.position.copy(VVector3v(-5, -2, 0));
+	scene.add(rotate_sphere);
+
+	raycast_objects.push(rotate_sphere);
+
 	var spritegeometry = new THREE.BoxGeometry( 1, 1, 0 );
 
 	var texture_mario = THREE.ImageUtils.loadTexture( "textures/mario.png" );
@@ -1910,10 +1984,10 @@ function init() {
 	transform_grid = new THREE.LineSegments(grid_geometry, grid_material);
 	transform_grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
 
-	var geometry = new THREE.SphereGeometry( 0.1, 16, 12 );
-	var background_material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+	var geometry = new THREE.SphereGeometry( 0.08, 16, 12 );
+	var dot_material = new THREE.MeshBasicMaterial( { color: 0x6a99b1, transparent: true, opacity: 0.5 } );
 
-	sphereInter = new THREE.Mesh( geometry, background_material );
+	sphereInter = new THREE.Mesh( geometry, dot_material );
 	sphereInter.visible = false;
 	scene.add( sphereInter );
 
@@ -2017,6 +2091,11 @@ function onDocumentMouseMove( event ) {
 
 		arrangeVVector(drag_object);
 	}
+	else if (rotating)
+	{
+		rotate_horizontal = Math.atan(mouse.x - rotate_mouse_start_x) * 0.8;
+		rotate_vertical = Math.atan(mouse.y - rotate_mouse_start_y) * 0.8;
+	}
 }
 
 function onDocumentMouseDown( event ) {
@@ -2029,13 +2108,22 @@ function onDocumentMouseDown( event ) {
 	if (!intersects.length)
 		return;
 
-	dragging = true;
-	drag_object = intersects[0].object.userData.vname;
-	drag_object_type = intersects[0].object.userData.meshtype;
-	drag_object_handle.copy(intersects[0].point);
-	drag_object_offset.copy(drag_object_handle);
-	drag_object_offset.sub(intersects[0].object.position);
-	drag_object_v1.copy(run_vectors[drag_object].v1);
+	if (intersects[0].object == rotate_sphere)
+	{
+		rotating = true;
+		rotate_mouse_start_x = mouse.x;
+		rotate_mouse_start_y = mouse.y;
+	}
+	else
+	{
+		dragging = true;
+		drag_object = intersects[0].object.userData.vname;
+		drag_object_type = intersects[0].object.userData.meshtype;
+		drag_object_handle.copy(intersects[0].point);
+		drag_object_offset.copy(drag_object_handle);
+		drag_object_offset.sub(intersects[0].object.position);
+		drag_object_v1.copy(run_vectors[drag_object].v1);
+	}
 }
 
 function onDocumentMouseUp( event ) {
@@ -2044,6 +2132,7 @@ function onDocumentMouseUp( event ) {
 	raycaster.setFromCamera( mouse, camera );
 
 	dragging = false;
+	rotating = false;
 }
 
 function onDocumentKeyDown( event ) {
@@ -2094,7 +2183,8 @@ function animate() {
 	requestAnimationFrame( animate );
 
 	render();
-	stats.update();
+	if (stats)
+		stats.update();
 }
 
 function vector_transition(vector, transition, lerp)
@@ -2648,10 +2738,17 @@ function run_constraints(vector)
 function render() {
 	dt = clock.getDelta();
 
-	camera.position.x = 0;//Math.cos(clock.getElapsedTime())*10;
-	camera.position.y = 0;
+	camera.position.x = Math.sin(rotate_horizontal) * 10;//Math.cos(clock.getElapsedTime())*10;
+	camera.position.y = Math.sin(rotate_vertical) * 10;
 	camera.position.z = 10;//Math.sin(clock.getElapsedTime())*10;
 	camera.lookAt( new THREE.Vector3(0, 0, 0) );
+
+
+	if (!rotating)
+	{
+		rotate_horizontal *= 0.95;
+		rotate_vertical *= 0.95;
+	}
 
 	camera.updateMatrixWorld();
 
