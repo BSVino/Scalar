@@ -326,25 +326,25 @@ function visualvectors_init()
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
-					label: "a",
+					label: "c",
 					notransition: true,
 					fixorigin: true,
 					spritehead: "clyde"
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
-					label: "c",
+					label: "p",
 					fixorigin: true,
 					notransition: true,
 					spritehead: "pacman"
 				})
 			],
 
-			info_div: "<span style='font-family: serif'><em>c = a + ?</em></span><br /><br />"
+			info_div: "<span style='font-family: serif'><em>p = c + ?</em></span><br /><br />"
 		},
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
-					label: "a",
+					label: "c",
 					notransition: true,
 					fixorigin: true,
 					spritehead: "clyde"
@@ -357,19 +357,19 @@ function visualvectors_init()
 					nodrag: true
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
-					label: "c",
+					label: "p",
 					fixorigin: true,
 					notransition: true,
 					spritehead: "pacman"
 				})
 			],
 
-			info_div: "<span style='font-family: serif'><em>c = a + ?</em></span><br /><br />"
+			info_div: "<span style='font-family: serif'><em>p = c + ?</em></span><br /><br />"
 		},
  		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
-					label: "a",
+					label: "c",
 					notransition: true,
 					fixorigin: true
 				}),
@@ -381,13 +381,13 @@ function visualvectors_init()
 					nodrag: true
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
-					label: "c",
+					label: "p",
 					fixorigin: true,
 					notransition: true
 				})
 			],
 
-			info_div: "<span style='font-family: serif'><em>c - a = b</em></span><br />b = c.sub(a);"
+			info_div: "<span style='font-family: serif'><em>p - c = b</em></span><br />b = p.sub(c);"
 		},
 
 		// DISTANCE
@@ -452,7 +452,7 @@ function visualvectors_init()
 		{
 			vectors: [
 				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
-					label: "a",
+					label: "c",
 					notransition: true,
 					fixorigin: true
 				}),
@@ -465,7 +465,7 @@ function visualvectors_init()
 					nodrag: true
 				}),
 				VVector({name: "blue", color: 0x0D0D69, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 0, 0),
-					label: "c",
+					label: "p",
 					fixorigin: true,
 					notransition: true
 				})
@@ -1310,7 +1310,7 @@ function visualvectors_init()
 				"<em>Questions</em><br /><span style='font-size: 20px'>@VinoBS bs.vino@gmail.com</span><br /><br />" +
 				"<em>http://vinoisnotouzo.com/vv</em><br /><br /><br />" +
 				"<em><span style='font-size: 24px'>Arithmetical symbols are written diagrams<br /> and geometrical figures are graphic formulas.<br/>- David Hilbert<br /><br /><br /></span></em>" +
-				"<em><span style='font-size: 24px'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens<br />Qamar Farooqui, Andrea Greenberg, Pax Kivimae</em>" +
+				"<em><span style='font-size: 24px'>Special thanks: Michael and William Golden, Bret Victor, Steven Wittens<br />Qamar Farooqui, Andrea Greenberg, Pax Kivimae, Alan Lee</em>" +
 				"</span>"
 		},
 	];
@@ -2855,7 +2855,10 @@ function render() {
 			arrangeVVector(k);
 
 		if (vector.spritehead)
+		{
 			vector.spritehead.position.copy(vector.v1);
+			vector.spritehead.quaternion.copy(new THREE.Quaternion());
+		}
 
 		if (vector.spriterot)
 		{
