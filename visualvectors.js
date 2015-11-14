@@ -483,11 +483,7 @@ function visualvectors_init()
 		// SCALAR MULTIPLICATION
 		{
 			vectors: [
-				VVector({name: "green", color: 0x0D690F, v0: VVector3v(0, 0, 0), v1: VVector3v(1, 1, 0),
-					fixorigin: true
-				}),
-				VVector({name: "red", color: 0x690D0D, v0: VVector3v(0, 0, 0), v1: VVector3v(1, -1, 0),
-					fixbase: "green",
+				VVector({name: "red", color: 0x690D0D, v0: VVector3v(-1, 0, 0), v1: VVector3v(1, 1, 0),
 					length: true,
 					spritehead: "mario"
 				})
