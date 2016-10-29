@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Visual Vectors</title>
+		<title>Scalar</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -11,6 +11,31 @@
 				margin: 0px;
 				overflow: hidden;
 			}
+
+			#info {
+				position: absolute;
+				bottom: 20px;
+				width: 100%;
+				text-align: center;
+				font-size: 34px;
+			}
+
+			#center {
+				position: absolute;
+				top: 20px;
+				width: 100%;
+				text-align: center;
+				font-size: 34px;
+			}
+
+			#pagenumber {
+				position: absolute;
+				bottom: 20px;
+				right: 20px;
+				width: 100%;
+				text-align: right;
+				font-size: 24px;
+			}
 		</style>
 	</head>
 	<body>
@@ -18,13 +43,19 @@
 		<script src="three.min.js"></script>
 		<script src="stats.min.js"></script>
 		<script src="vv_math.js"></script>
-		<script src="visualvectors.js"></script>
+		<script src="scalar.js"></script>
+		<script src="slides.js"></script>
 		<script src="droid_serif_regular.typeface.js"></script>
+
+		<div id="container">
+			<div id="info">aoeu</div>
+			<div id="center">aoeu</div>
+			<div id="pagenumber">aoeu</div>
+		</div>
 
 		<script>
 			visualvectors_init();
 		</script>
-
 	</body>
 </html>
 
