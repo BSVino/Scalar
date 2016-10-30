@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Scalar Testing</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+	<body>
+
+		<script src="env_browser.js"></script>
+		<script src="Scalang/common.js"></script>
+		<script src="Scalang/parse.js"></script>
+		<script src="Scalang/tests/run_tests.js"></script>
+
+		<div id="output"></div>
+
+		<script>
+			var result = run_tests();
+
+			var outputText = "";
+
+			if (!result.success) {
+				outputText = result.output;
+			} else {
+				outputText = "ALL TESTS PASS";
+			}
+
+			var output = document.getElementById("output");
+			output.innerHTML = outputText;
+		</script>
+	</body>
+</html>
+
