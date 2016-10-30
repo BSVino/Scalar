@@ -46,8 +46,8 @@ function TV3_Direction(v0, v1)
 
 function TV3_NearestPointOnLine(p, v0, v1)
 {
-	var v = VVector3(v1).sub(v0);
-	var w = VVector3(p).sub(v0);
+	let v = VVector3(v1).sub(v0);
+	let w = VVector3(p).sub(v0);
 
 	w.projectOnVector(v);
 
@@ -67,10 +67,10 @@ function RemapVal(x, in_low, in_high, out_low, out_high)
 // http://stackoverflow.com/a/27410603
 function toScreenPosition(vector, camera)
 {
-	var result = VVector3(vector);
+	let result = VVector3(vector);
 
-	var widthHalf = renderer.context.canvas.width*0.5/window.devicePixelRatio;
-	var heightHalf = renderer.context.canvas.height*0.5/window.devicePixelRatio;
+	let widthHalf = renderer.context.canvas.width*0.5/window.devicePixelRatio;
+	let heightHalf = renderer.context.canvas.height*0.5/window.devicePixelRatio;
 
 	result.project(camera);
 
@@ -82,10 +82,10 @@ function toScreenPosition(vector, camera)
 
 function fromScreenPosition(vector, camera)
 {
-	var result = VVector3(vector);
+	let result = VVector3(vector);
 
-	var widthHalf = renderer.context.canvas.width*0.5/window.devicePixelRatio;
-	var heightHalf = renderer.context.canvas.height*0.5/window.devicePixelRatio;
+	let widthHalf = renderer.context.canvas.width*0.5/window.devicePixelRatio;
+	let heightHalf = renderer.context.canvas.height*0.5/window.devicePixelRatio;
 
 	result.x = (result.x - widthHalf) / widthHalf;
 	result.y = -(result.y - heightHalf) / heightHalf;

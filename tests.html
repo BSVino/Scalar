@@ -7,26 +7,28 @@
 	</head>
 	<body>
 
+		<script src="common.js"></script>
 		<script src="env_browser.js"></script>
 		<script src="Scalang/common.js"></script>
 		<script src="Scalang/parse.js"></script>
+		<script src="Scalang/error.js"></script>
 		<script src="Scalang/tests/run_tests.js"></script>
 
 		<div id="output"></div>
 
 		<script>
-			var result = run_tests();
+			let result = run_tests();
 
-			var outputText = "";
+			let output_text = "";
 
 			if (!result.success) {
-				outputText = result.output;
+				output_text = result.messages;
 			} else {
-				outputText = "ALL TESTS PASS";
+				output_text = "ALL TESTS PASS";
 			}
 
-			var output = document.getElementById("output");
-			output.innerHTML = outputText;
+			let output_div = document.getElementById("output");
+			output_div.innerHTML = output_text;
 		</script>
 	</body>
 </html>

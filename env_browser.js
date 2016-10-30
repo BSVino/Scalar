@@ -1,16 +1,16 @@
-scalar_print = function(string) {
+Scalar.print = function(string) {
 	console.log(string);
 };
 
 // Blocking file read, only use for local reads!
-scalar_read_file = function(file) {
-	var xmlhttp = new XMLHttpRequest();
+Scalar.read_file = function(file) {
+	let xmlhttp = new XMLHttpRequest();
 
-	var result;
+	let result;
 
 	xmlhttp.onreadystatechange=function()
 	{
-		scalar_print(xmlhttp.readyState);
+		Scalar.print(xmlhttp.readyState);
 
 		if (xmlhttp.readyState==4)
 		{
@@ -18,7 +18,7 @@ scalar_read_file = function(file) {
 		}
 	};
 
-	var url = window.location.href;
+	let url = window.location.href;
 	url = url.substring(0, url.lastIndexOf("/") + 1) + file;
 
 	xmlhttp.open("GET", url, false);
@@ -27,7 +27,7 @@ scalar_read_file = function(file) {
 	return result;
 }
 
-scalar_assert = function(condition, message) {
+Scalar.assert = function(condition, message) {
 	if (!condition) {
 		throw message || "Assert failed";
 	}

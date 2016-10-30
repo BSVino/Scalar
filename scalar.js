@@ -1,68 +1,66 @@
-var Scalar = {};
+let container;
+let stats;
+let camera;
+let scene;
+let raycaster;
+let renderer;
+let parentTransform;
+let sphereInter;
+let rotate_sphere;
+let rotating = false;
+let rotate_mouse_start_x;
+let rotate_mouse_start_y;
+let rotate_horizontal = 0;
+let rotate_vertical = 0;
 
-var container;
-var stats;
-var camera;
-var scene;
-var raycaster;
-var renderer;
-var parentTransform;
-var sphereInter;
-var rotate_sphere;
-var rotating = false;
-var rotate_mouse_start_x;
-var rotate_mouse_start_y;
-var rotate_horizontal = 0;
-var rotate_vertical = 0;
+let mouse = new THREE.Vector2();
+let radius = 100;
 
-var mouse = new THREE.Vector2();
-var radius = 100;
+let currentIntersected;
 
-var currentIntersected;
+let clock = new THREE.Clock();
+let dt;
 
-var clock = new THREE.Clock();
-var dt;
+let TRANSITION_SPEED = 2;
 
-var TRANSITION_SPEED = 2;
+let dragging = false;
+let drag_object;
+let drag_object_type;
+let drag_object_offset = new THREE.Vector3();
+let drag_object_handle = new THREE.Vector3();
+let drag_object_v1 = new THREE.Vector3();
 
-var dragging = false;
-var drag_object;
-var drag_object_type;
-var drag_object_offset = new THREE.Vector3();
-var drag_object_handle = new THREE.Vector3();
-var drag_object_v1 = new THREE.Vector3();
+let grid_fade = 0;
+let grid;
+let grid_strong;
 
-var grid_fade = 0;
-var grid;
-var grid_strong;
-
-var current_page;
-var init_vectors;
+let current_page;
+let init_vectors;
 
 // Maps vector names to runtime data
-var run_vectors = {};
+let run_vectors = {};
 
-var run_matrices = {};
-var raycast_objects = [];
+let run_matrices = {};
+let raycast_objects = [];
 
-var transform_grid;
-var transform_grid_strong;
-var transform_grid_matrix;
+let transform_grid;
+let transform_grid_strong;
+let transform_grid_matrix;
 
-var shift_down = false;
+let shift_down = false;
 
-var mesh_mario;
-var mesh_pacman;
-var mesh_clyde;
+let mesh_mario;
+let mesh_pacman;
+let mesh_clyde;
 
-var texture_pacman1;
-var texture_pacman2;
-var texture_clyde_u;
-var texture_clyde_ur;
-var texture_clyde_ul;
-var texture_clyde_d;
-var texture_clyde_dr;
-var texture_clyde_dl;
+let texture_pacman1;
+let texture_pacman2;
+let texture_clyde_u;
+let texture_clyde_ur;
+let texture_clyde_ul;
+let texture_clyde_d;
+let texture_clyde_dr;
+let texture_clyde_dl;
 
 
 function mesh_from_name(name) {
@@ -90,17 +88,17 @@ function visualvectors_init() {
 }
 
 function arrangeVVector(k) {
-	var v = run_vectors[k];
+	let v = run_vectors[k];
 	v.vector.position.copy(v.v0);
 	v.vector_head.position.copy(v.v1);
 	v.vector_handle.position.copy(v.v0);
 	v.vector_base.position.copy(v.v0);
 	v.vector_head_handle.position.copy(v.v1);
 
-	var direction = new THREE.Vector3();
+	let direction = new THREE.Vector3();
 	direction.copy(v.v1);
 	direction.sub(v.v0);
-	var vector_length = direction.length();
+	let vector_length = direction.length();
 	direction.normalize();
 
 	v.vector.scale.setX(vector_length - 0.25);
@@ -130,13 +128,13 @@ function arrangeVVector(k) {
 	);
 }
 
-var vector_geometry;
-var handle_geometry;
-var vector_handle_geometry;
-var head_geometry;
-var handle_material;
+let vector_geometry;
+let handle_geometry;
+let vector_handle_geometry;
+let head_geometry;
+let handle_material;
 
-var length_text_attr = {
+let length_text_attr = {
 	size: 60,
 	height: 0,
 	curveSegments: 3,
@@ -145,7 +143,7 @@ var length_text_attr = {
 	bevelEnabled: false
 };
 
-var angle_text_attr = {
+let angle_text_attr = {
 	size: 60,
 	height: 0,
 	curveSegments: 3,
@@ -160,7 +158,7 @@ function array_swap_pop(array, index) {
 }
 
 function remove_raycast_object(object) {
-	for (var k = 0; k < raycast_objects.length; k++) {
+	for (let k = 0; k < raycast_objects.length; k++) {
 		if (object === raycast_objects[k]) {
 			array_swap_pop(raycast_objects, k);
 			return;
@@ -201,12 +199,12 @@ function page_setup(page) {
 		scene.remove(transform_grid_strong);
 	}
 
-	for (var vname in run_vectors) {
+	for (let vname in run_vectors) {
 		if (!run_vectors.hasOwnProperty(vname)) {
 			continue;
 		}
 
-		var v = run_vectors[vname];
+		let v = run_vectors[vname];
 
 		if (!v.kill) {
 			remove_raycast_object(v.vector_handle);
@@ -281,15 +279,15 @@ function page_setup(page) {
 		}
 	}
 
-	for ( var i = 0; i < init_vectors.length; i ++ ) {
-		var vname = init_vectors[i].name;
-		var v = run_vectors[vname];
+	for ( let i = 0; i < init_vectors.length; i ++ ) {
+		let vname = init_vectors[i].name;
+		let v = run_vectors[vname];
 
-		var init_v0 = VVector3(init_vectors[i].v0);
-		var init_v1 = VVector3(init_vectors[i].v1);
+		let init_v0 = VVector3(init_vectors[i].v0);
+		let init_v1 = VVector3(init_vectors[i].v1);
 
-		var fixorigin = false;
-		var test = false;
+		let fixorigin = false;
+		let test = false;
 
 		if ("fixorigin" in init_vectors[i] && init_vectors[i].fixorigin)
 			fixorigin = true;
@@ -311,26 +309,26 @@ function page_setup(page) {
 				v.transitions = [];
 
 				{
-					var d0 = TV3_Distance(v.v0, v.v1);
-					var d1 = TV3_Distance(init_v0, init_v1);
+					let d0 = TV3_Distance(v.v0, v.v1);
+					let d1 = TV3_Distance(init_v0, init_v1);
 					if (Math.abs(d0 - d1) > 0.00001)
 						v.transitions.push(VTransition("length", d0, d1,
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
 							));
 				}
 				{
-					var v0 = TV3_Center(v.v0, v.v1);
-					var v1 = TV3_Center(init_v0, init_v1);
+					let v0 = TV3_Center(v.v0, v.v1);
+					let v1 = TV3_Center(init_v0, init_v1);
 					if (VVector3(v0).sub(v1).length() > 0.00001)
 						v.transitions.push(VTransition("center", v0, v1,
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
 							));
 				}
 				{
-					var q0 = TV3_Direction(v.v0, v.v1);
-					var q1 = TV3_Direction(init_v0, init_v1);
-					var v0 = VVector3v(1, 0, 0).applyQuaternion(q0);
-					var v1 = VVector3v(1, 0, 0).applyQuaternion(q1);
+					let q0 = TV3_Direction(v.v0, v.v1);
+					let q1 = TV3_Direction(init_v0, init_v1);
+					let v0 = VVector3v(1, 0, 0).applyQuaternion(q0);
+					let v1 = VVector3v(1, 0, 0).applyQuaternion(q1);
 					if (v0.dot(v1) < 0.9999)
 						v.transitions.push(VTransition("direction", q0, q1,
 							clock.getElapsedTime(), clock.getElapsedTime()+1/TRANSITION_SPEED
@@ -338,13 +336,13 @@ function page_setup(page) {
 				}
 			}
 		} else {
-			var arrow_material = new THREE.MeshBasicMaterial( { color: init_vectors[i].color } );
+			let arrow_material = new THREE.MeshBasicMaterial( { color: init_vectors[i].color } );
 
-			var vector = new THREE.Mesh( vector_geometry, arrow_material );
-			var vector_handle = new THREE.Mesh( vector_handle_geometry, handle_material );
-			var vector_head = new THREE.Mesh( head_geometry, arrow_material );
-			var vector_head_handle = new THREE.Mesh( head_handle_geometry, handle_material );
-			var vector_base = new THREE.Mesh( handle_geometry, handle_material );
+			let vector = new THREE.Mesh( vector_geometry, arrow_material );
+			let vector_handle = new THREE.Mesh( vector_handle_geometry, handle_material );
+			let vector_head = new THREE.Mesh( head_geometry, arrow_material );
+			let vector_head_handle = new THREE.Mesh( head_handle_geometry, handle_material );
+			let vector_base = new THREE.Mesh( handle_geometry, handle_material );
 
 			vector.userData.vid = i;
 			vector.userData.vname = vname;
@@ -412,12 +410,12 @@ function page_setup(page) {
 		}
 
 		if ("length" in init_vectors[i]) {
-			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
-			var text_geometry = new THREE.TextGeometry("Length", length_text_attr);
+			let text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			let text_geometry = new THREE.TextGeometry("Length", length_text_attr);
 
 			text_geometry.computeBoundingBox();
 
-			var scale = 0.005;
+			let scale = 0.005;
 
 			v.length_label = new THREE.Mesh( text_geometry, text_material );
 			v.length_label.scale.copy(VVector3v(scale, scale, scale));
@@ -427,12 +425,12 @@ function page_setup(page) {
 		}
 
 		if ("angle" in init_vectors[i] || "angleto" in init_vectors[i]) {
-			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
-			var text_geometry = new THREE.TextGeometry("angle: 123.45", angle_text_attr);
+			let text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			let text_geometry = new THREE.TextGeometry("angle: 123.45", angle_text_attr);
 
 			text_geometry.computeBoundingBox();
 
-			var scale = 0.005;
+			let scale = 0.005;
 
 			v.angle_label = new THREE.Mesh( text_geometry, text_material );
 			v.angle_label.scale.copy(VVector3v(scale, scale, scale));
@@ -440,21 +438,21 @@ function page_setup(page) {
 
 			v.angle_label.text_size = (text_geometry.boundingBox.max.x - text_geometry.boundingBox.min.x) * v.angle_label.scale.x;
 
-			var circle_geometry = new THREE.RingGeometry(1, 5, 32);
+			let circle_geometry = new THREE.RingGeometry(1, 5, 32);
 			v.angle_circle = new THREE.Mesh(circle_geometry, text_material);
 			parentTransform.add(v.angle_circle);
 
 			if ("angle" in init_vectors[i]) {
-				var xaxis_geometry = new THREE.Geometry();
+				let xaxis_geometry = new THREE.Geometry();
 
-				for (var k = 0; k < 2; k += 0.2) {
+				for (let k = 0; k < 2; k += 0.2) {
 					xaxis_geometry.vertices.push(
 						new THREE.Vector3( k, 0, 0 ),
 						new THREE.Vector3( k+0.08, 0, 0 )
 					);
 				}
 
-				var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+				let xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
 				v.angle_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
 				parentTransform.add(v.angle_xaxis);
 			}
@@ -467,12 +465,12 @@ function page_setup(page) {
 		}
 
 		if ("coordinates" in init_vectors[i]) {
-			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
-			var text_geometry = new THREE.TextGeometry("(0.00, 0.00)", length_text_attr);
+			let text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			let text_geometry = new THREE.TextGeometry("(0.00, 0.00)", length_text_attr);
 
 			text_geometry.computeBoundingBox();
 
-			var scale = 0.005;
+			let scale = 0.005;
 
 			v.head_coord_label = new THREE.Mesh( text_geometry, text_material );
 			v.head_coord_label.scale.copy(VVector3v(scale, scale, scale));
@@ -486,12 +484,12 @@ function page_setup(page) {
 		}
 
 		if ("label" in init_vectors[i]) {
-			var text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
-			var text_geometry = new THREE.TextGeometry(init_vectors[i].label, length_text_attr);
+			let text_material = new THREE.MeshBasicMaterial( { color: 0x0 } );
+			let text_geometry = new THREE.TextGeometry(init_vectors[i].label, length_text_attr);
 
 			text_geometry.computeBoundingBox();
 
-			var scale = 0.005;
+			let scale = 0.005;
 
 			v.name_label = new THREE.Mesh( text_geometry, text_material );
 			v.name_label.scale.copy(VVector3v(scale, scale, scale));
@@ -515,14 +513,14 @@ function page_setup(page) {
 		}
 
 		if (v.fixprojection) {
-			var xaxis_geometry = new THREE.Geometry();
+			let xaxis_geometry = new THREE.Geometry();
 
 			xaxis_geometry.vertices.push(
 				new THREE.Vector3( 0, 0, 0 ),
 				new THREE.Vector3( 1, 0, 0 )
 			);
 
-			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+			let xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
 
 			v.projection_v0 = new THREE.LineSegments(xaxis_geometry, xaxis_material);
 			parentTransform.add(v.projection_v0);
@@ -532,27 +530,27 @@ function page_setup(page) {
 		}
 
 		if (v.fixxprojection) {
-			var xaxis_geometry = new THREE.Geometry();
+			let xaxis_geometry = new THREE.Geometry();
 
 			xaxis_geometry.vertices.push(
 				new THREE.Vector3( 0, 0, 0 ),
 				new THREE.Vector3( 0, 1, 0 )
 			);
 
-			var xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+			let xaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
 			v.component_xaxis = new THREE.LineSegments(xaxis_geometry, xaxis_material);
 			parentTransform.add(v.component_xaxis);
 		}
 
 		if (v.fixyprojection) {
-			var yaxis_geometry = new THREE.Geometry();
+			let yaxis_geometry = new THREE.Geometry();
 
 			yaxis_geometry.vertices.push(
 				new THREE.Vector3( 0, 0, 0 ),
 				new THREE.Vector3( 1, 0, 0 )
 			);
 
-			var yaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
+			let yaxis_material = new THREE.LineBasicMaterial( { color: 0 } );
 			v.component_yaxis = new THREE.LineSegments(yaxis_geometry, yaxis_material);
 			parentTransform.add(v.component_yaxis);
 		}
@@ -605,9 +603,9 @@ function page_advance() {
 	page_setup(current_page+1);
 }
 
-var info_div;
-var center_div;
-var pagenumber_div;
+let info_div;
+let center_div;
+let pagenumber_div;
 
 function init() {
 	container = document.getElementById( "container" );
@@ -616,41 +614,41 @@ function init() {
 	center_div = document.getElementById( "center" );
 	pagenumber_div = document.getElementById( "pagenumber" );
 
-	var width = window.innerWidth;
-	var height = window.innerHeight;
+	let width = window.innerWidth;
+	let height = window.innerHeight;
 
-	//var ratio = height/width;
-	//var size = 10;
+	//let ratio = height/width;
+	//let size = 10;
 	//camera = new THREE.OrthographicCamera( -size, size, size*ratio, -size*ratio, -1, 10000 );
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 
 	scene = new THREE.Scene();
 
-	var light = new THREE.AmbientLight( 0xfff4d4 );
+	let light = new THREE.AmbientLight( 0xfff4d4 );
 	scene.add( light );
 
-	var light = new THREE.PointLight( 0xffffff, 1, 100 );
+	let light = new THREE.PointLight( 0xffffff, 1, 100 );
 	light.position.set( -4, -2, 2 );
 	scene.add( light );
 
 	rotate_sphere_geometry = new THREE.SphereGeometry(0.3, 30, 20);
-	var sphere_material = new THREE.MeshLambertMaterial( { color: 0x757263, transparent: true, opacity: 0.5 } );
+	let sphere_material = new THREE.MeshLambertMaterial( { color: 0x757263, transparent: true, opacity: 0.5 } );
 	rotate_sphere = new THREE.Mesh( rotate_sphere_geometry, sphere_material );
 	rotate_sphere.position.copy(VVector3v(-5, -2, 0));
 	scene.add(rotate_sphere);
 
 	raycast_objects.push(rotate_sphere);
 
-	var spritegeometry = new THREE.BoxGeometry( 1, 1, 0 );
+	let spritegeometry = new THREE.BoxGeometry( 1, 1, 0 );
 
-	var texture_mario = THREE.ImageUtils.loadTexture( "textures/mario.png" );
-	var material_mario = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_mario, alphaTest: 0.5 } );
+	let texture_mario = THREE.ImageUtils.loadTexture( "textures/mario.png" );
+	let material_mario = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_mario, alphaTest: 0.5 } );
 	mesh_mario = new THREE.Mesh( spritegeometry, material_mario );
 
 	texture_pacman1 = THREE.ImageUtils.loadTexture( "textures/pacman1.png" );
 	texture_pacman2 = THREE.ImageUtils.loadTexture( "textures/pacman2.png" );
-	var material_pacman = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_pacman1, alphaTest: 0.5 } );
+	let material_pacman = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_pacman1, alphaTest: 0.5 } );
 	mesh_pacman = new THREE.Mesh( spritegeometry, material_pacman );
 
 	texture_clyde_u = THREE.ImageUtils.loadTexture( "textures/clyde-u.png" );
@@ -659,14 +657,14 @@ function init() {
 	texture_clyde_d = THREE.ImageUtils.loadTexture( "textures/clyde-d.png" );
 	texture_clyde_dr = THREE.ImageUtils.loadTexture( "textures/clyde-dr.png" );
 	texture_clyde_dl = THREE.ImageUtils.loadTexture( "textures/clyde-dl.png" );
-	var material_clyde = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_clyde_ul, alphaTest: 0.5 } );
+	let material_clyde = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture_clyde_ul, alphaTest: 0.5 } );
 	mesh_clyde = new THREE.Mesh( spritegeometry, material_clyde );
 
-	var GRID_MAX = 5;
+	let GRID_MAX = 5;
 
-	var grid_geometry = new THREE.Geometry();
+	let grid_geometry = new THREE.Geometry();
 
-	for (var k = -GRID_MAX+1; k < GRID_MAX; k++) {
+	for (let k = -GRID_MAX+1; k < GRID_MAX; k++) {
 		if (k === 0) {
 			continue;
 		}
@@ -679,12 +677,12 @@ function init() {
 		);
 	}
 
-	var grid_material = new THREE.MeshBasicMaterial( { color: 0xe6d5c1 } );
+	let grid_material = new THREE.MeshBasicMaterial( { color: 0xe6d5c1 } );
 	grid = new THREE.LineSegments(grid_geometry, grid_material);
 	grid.position.copy(VVector3v(0, 0, -0.1));
 	scene.add(grid);
 
-	var grid_strong_geometry = new THREE.Geometry();
+	let grid_strong_geometry = new THREE.Geometry();
 
 	grid_strong_geometry.vertices.push(
 		new THREE.Vector3( -5, -5, 0 ),
@@ -701,7 +699,7 @@ function init() {
 		new THREE.Vector3( 5, 0, 0 )
 	);
 
-	var grid_strong_material = new THREE.MeshBasicMaterial( { color: 0xc3b5a5 } );
+	let grid_strong_material = new THREE.MeshBasicMaterial( { color: 0xc3b5a5 } );
 	grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
 	grid_strong.position.copy(VVector3v(0, 0, -0.1));
 	scene.add(grid_strong);
@@ -709,14 +707,14 @@ function init() {
 	transform_grid = new THREE.LineSegments(grid_geometry, grid_material);
 	transform_grid_strong = new THREE.LineSegments(grid_strong_geometry, grid_strong_material);
 
-	var geometry = new THREE.SphereGeometry( 0.08, 16, 12 );
-	var dot_material = new THREE.MeshBasicMaterial( { color: 0x6a99b1, transparent: true, opacity: 0.5 } );
+	let geometry = new THREE.SphereGeometry( 0.08, 16, 12 );
+	let dot_material = new THREE.MeshBasicMaterial( { color: 0x6a99b1, transparent: true, opacity: 0.5 } );
 
 	sphereInter = new THREE.Mesh( geometry, dot_material );
 	sphereInter.visible = false;
 	scene.add( sphereInter );
 
-	var geometry = new THREE.Geometry( );
+	let geometry = new THREE.Geometry( );
 	geometry.vertices.push(new THREE.Vector3(0, 0, 0));
 	geometry.vertices.push(new THREE.Vector3(1, 0, 0));
 
@@ -784,20 +782,20 @@ function onDocumentMouseMove( event ) {
 	mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
 
 	if (dragging) {
-		var original_screen_position = toScreenPosition(drag_object_handle, camera);
-		var screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
-		var world_position = fromScreenPosition(screen_position, camera);
+		let original_screen_position = toScreenPosition(drag_object_handle, camera);
+		let screen_position = new THREE.Vector3(event.clientX, event.clientY, original_screen_position.z);
+		let world_position = fromScreenPosition(screen_position, camera);
 		world_position.sub(drag_object_offset);
 
 		if (drag_object_type === "body") {
-			var difference = VVector3(world_position);
+			let difference = VVector3(world_position);
 			difference.sub(run_vectors[drag_object].v0);
 			run_vectors[drag_object].v0 = world_position;
 			run_vectors[drag_object].v1.add(difference);
 		} else if (drag_object_type === "head")
 			run_vectors[drag_object].v1 = world_position;
 		else if (drag_object_type === "head_offset") {
-			var difference = VVector3(drag_object_v1).sub(drag_object_handle);
+			let difference = VVector3(drag_object_v1).sub(drag_object_handle);
 			difference.add(fromScreenPosition(screen_position, camera));
 
 			run_vectors[drag_object].v1.copy(difference);
@@ -819,7 +817,7 @@ function onDocumentMouseDown( event ) {
 
 	raycaster.setFromCamera( mouse, camera );
 
-	var intersects = raycaster.intersectObjects( raycast_objects, true);
+	let intersects = raycaster.intersectObjects( raycast_objects, true);
 
 	if (!intersects.length) {
 		return;
@@ -903,55 +901,55 @@ function animate() {
 
 function vector_transition(vector, transition, lerp) {
 	if (transition.type === "length") {
-		var new_length = RemapVal(lerp, 0, 1, transition.start_value, transition.end_value);
+		let new_length = RemapVal(lerp, 0, 1, transition.start_value, transition.end_value);
 
-		var v = VVector3(vector.v1);
+		let v = VVector3(vector.v1);
 		v.sub(vector.v0);
 
-		var center = VVector3(v);
+		let center = VVector3(v);
 		center.multiplyScalar(0.5);
 		center.add(vector.v0);
 
 		v.normalize();
 		v.multiplyScalar(new_length);
 
-		var new_v0 = VVector3(v);
+		let new_v0 = VVector3(v);
 		new_v0.multiplyScalar(-0.5);
 		new_v0.add(center);
 
-		var new_v1 = VVector3(v);
+		let new_v1 = VVector3(v);
 		new_v1.multiplyScalar(0.5);
 		new_v1.add(center);
 
 		vector.v0 = new_v0;
 		vector.v1 = new_v1;
 	} else if (transition.type === "center") {
-		var center_path = VVector3(transition.end_value);
+		let center_path = VVector3(transition.end_value);
 		center_path.sub(transition.start_value);
 		center_path.multiplyScalar(lerp);
 		center_path.add(transition.start_value);
 
-		var v = VVector3(vector.v1);
+		let v = VVector3(vector.v1);
 		v.sub(vector.v0);
 
-		var new_v0 = VVector3(v);
+		let new_v0 = VVector3(v);
 		new_v0.multiplyScalar(-0.5);
 		new_v0.add(center_path);
 
-		var new_v1 = VVector3(v);
+		let new_v1 = VVector3(v);
 		new_v1.multiplyScalar(0.5);
 		new_v1.add(center_path);
 
 		vector.v0 = new_v0;
 		vector.v1 = new_v1;
 	} else if (transition.type === "direction") {
-		var new_direction = new THREE.Quaternion();
+		let new_direction = new THREE.Quaternion();
 		THREE.Quaternion.slerp(transition.start_value, transition.end_value, new_direction, lerp);
 
-		var center = TV3_Center(vector.v0, vector.v1);
-		var length = TV3_Distance(vector.v0, vector.v1);
+		let center = TV3_Center(vector.v0, vector.v1);
+		let length = TV3_Distance(vector.v0, vector.v1);
 
-		var new_v = VVector3v(1, 0, 0);
+		let new_v = VVector3v(1, 0, 0);
 		new_v.applyQuaternion(new_direction);
 		new_v.multiplyScalar(length/2);
 
@@ -971,7 +969,7 @@ function update_length_label(vector) {
 		return;
 	}
 
-	var scale = VVector3v(1, -0.1, -0.1).multiplyScalar(vector.length_label.text_size + 2);
+	let scale = VVector3v(1, -0.1, -0.1).multiplyScalar(vector.length_label.text_size + 2);
 	vector.length_label.position.copy(
 		VVector3(vector.v1)
 			.sub(VVector3(vector.v0))
@@ -980,7 +978,7 @@ function update_length_label(vector) {
 			.sub(scale)
 	);
 
-	var new_length = VVector3(vector.v1).sub(vector.v0).length();
+	let new_length = VVector3(vector.v1).sub(vector.v0).length();
 
 	if (shift_down && Math.abs(Math.round(new_length) - new_length) < 0.1) {
 		new_length = Math.round(new_length);
@@ -998,16 +996,16 @@ function update_angle_label(vector) {
 		return;
 	}
 
-	var scale = VVector3v(0, 0, -0.1);
+	let scale = VVector3v(0, 0, -0.1);
 
-	var vec_normalized = VVector3(vector.v1).sub(vector.v0).normalize();
-	var new_angle = Math.acos(vec_normalized.dot(VVector3v(1, 0, 0)));
+	let vec_normalized = VVector3(vector.v1).sub(vector.v0).normalize();
+	let new_angle = Math.acos(vec_normalized.dot(VVector3v(1, 0, 0)));
 
 	if (vector.angleto) {
-		var othervec = run_vectors[vector.angleto];
-		var othervec_normalized = VVector3(othervec.v1).sub(othervec.v0).normalize();
+		let othervec = run_vectors[vector.angleto];
+		let othervec_normalized = VVector3(othervec.v1).sub(othervec.v0).normalize();
 
-		var average_vector = VVector3(vector.v1)
+		let average_vector = VVector3(vector.v1)
 			.sub(vector.v0)
 			.normalize()
 			.add(othervec_normalized)
@@ -1040,12 +1038,12 @@ function update_angle_label(vector) {
 	}
 
 	if (vector.angleto) {
-		var othervec = run_vectors[vector.angleto];
-		var othervec_normalized = VVector3(othervec.v1).sub(othervec.v0).normalize();
+		let othervec = run_vectors[vector.angleto];
+		let othervec_normalized = VVector3(othervec.v1).sub(othervec.v0).normalize();
 		new_angle = Math.acos(vec_normalized.dot(othervec_normalized));
 	}
 
-	var new_angle_degrees = new_angle * 180 / Math.PI;
+	let new_angle_degrees = new_angle * 180 / Math.PI;
 
 	if (shift_down && Math.abs(Math.round(new_angle_degrees) - new_angle_degrees) < 0.1) {
 		new_angle_degrees = Math.round(new_angle_degrees);
@@ -1061,10 +1059,10 @@ function update_angle_label(vector) {
 		vector.angle_circle.geometry = new THREE.RingGeometry(0.7, 0.75, 30, 1, 0, new_angle);
 
 		if (vector.angleto) {
-			var vec_angle = Math.atan2(vec_normalized.y, vec_normalized.x);
-			var vec2_angle = Math.atan2(othervec_normalized.y, othervec_normalized.x);
+			let vec_angle = Math.atan2(vec_normalized.y, vec_normalized.x);
+			let vec2_angle = Math.atan2(othervec_normalized.y, othervec_normalized.x);
 
-			var difference = (vec2_angle - vec_angle);
+			let difference = (vec2_angle - vec_angle);
 			if (difference < -Math.PI) {
 				difference += Math.PI * 2;
 			} else if (difference > Math.PI) {
@@ -1085,19 +1083,19 @@ function update_angle_label(vector) {
 
 function update_coords_label(vector) {
 	if (vector.head_coord_label !== undefined && vector.head_coord_label !== null) {
-		var offset = VVector3v(0.4, 0.2, -0.1);
+		let offset = VVector3v(0.4, 0.2, -0.1);
 		vector.head_coord_label.position.copy(
 			VVector3(vector.v1)
 				.add(offset)
 		);
 
-		var new_coord = (vector.v1.x+123) * (vector.v1.y+123) * (vector.v1.z+123);
+		let new_coord = (vector.v1.x+123) * (vector.v1.y+123) * (vector.v1.z+123);
 
-		var x = vector.v1.x;
+		let x = vector.v1.x;
 		if (Math.abs(vector.v1.x) < 0.01)
 			x = 0;
 
-		var y = vector.v1.y;
+		let y = vector.v1.y;
 		if (Math.abs(vector.v1.y) < 0.01)
 			y = 0;
 
@@ -1114,20 +1112,20 @@ function update_coords_label(vector) {
 	}
 
 	if (vector.tail_coord_label !== undefined && vector.tail_coord_label !== null) {
-		var offset = VVector3v(-1.2, -0.2, -0.1).multiplyScalar(vector.tail_coord_label.text_size);
+		let offset = VVector3v(-1.2, -0.2, -0.1).multiplyScalar(vector.tail_coord_label.text_size);
 		vector.tail_coord_label.position.copy(
 			VVector3(vector.v0)
 				.add(offset)
 		);
 
-		var new_coord = (vector.v0.x+123) * (vector.v0.y+123) * (vector.v0.z+123);
+		let new_coord = (vector.v0.x+123) * (vector.v0.y+123) * (vector.v0.z+123);
 
-		var x = vector.v0.x;
+		let x = vector.v0.x;
 		if (Math.abs(vector.v0.x) < 0.01) {
 			x = 0;
 		}
 
-		var y = vector.v0.y;
+		let y = vector.v0.y;
 		if (Math.abs(vector.v0.y) < 0.01) {
 			y = 0;
 		}
@@ -1149,16 +1147,16 @@ function update_coords_label(vector) {
 }
 
 function run_constraints(vector) {
-	var arrange = false;
+	let arrange = false;
 
 	if (vector.transform && run_vectors[drag_object] !== vector) {
-		var transform_vector = run_vectors[vector.transform[0]];
+		let transform_vector = run_vectors[vector.transform[0]];
 		if (transform_vector) {
-			var matrix = vector.transform[1];
+			let matrix = vector.transform[1];
 			if (typeof(matrix) === "string") {
 				if (run_matrices && run_matrices[matrix]) {
-					var vx = run_vectors[run_matrices[matrix][0]].v1;
-					var vy = run_vectors[run_matrices[matrix][1]].v1;
+					let vx = run_vectors[run_matrices[matrix][0]].v1;
+					let vy = run_vectors[run_matrices[matrix][1]].v1;
 					matrix = new THREE.Matrix4().makeBasis(vx, vy, VVector3v(0, 0, 1));
 
 					vector.v1.copy(
@@ -1172,7 +1170,7 @@ function run_constraints(vector) {
 			}
 			else if (Array.isArray(matrix)) {
 				if (matrix[0] === "scaleofx") {
-					var scale = run_vectors[matrix[1]].v1.dot(VVector3v(1, 0, 0));
+					let scale = run_vectors[matrix[1]].v1.dot(VVector3v(1, 0, 0));
 					matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
 
 					vector.v1.copy(
@@ -1184,7 +1182,7 @@ function run_constraints(vector) {
 
 					arrange = true;
 				} else if (matrix[0] === "scaleofy") {
-					var scale = run_vectors[matrix[1]].v1.dot(VVector3v(0, 1, 0));
+					let scale = run_vectors[matrix[1]].v1.dot(VVector3v(0, 1, 0));
 					matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
 
 					vector.v1.copy(
@@ -1211,17 +1209,17 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixdirection && run_vectors[drag_object] !== vector) {
-		var dir_vector = run_vectors[vector.fixdirection];
+		let dir_vector = run_vectors[vector.fixdirection];
 		if (!dir_vector) {
 			console.error("Couldn't find direction vector: " + vector.fixdirection);
 		}
 
-		var new_direction = TV3_Direction(dir_vector.v0, dir_vector.v1);
+		let new_direction = TV3_Direction(dir_vector.v0, dir_vector.v1);
 
-		var center = TV3_Center(vector.v0, vector.v1);
-		var length = TV3_Distance(vector.v0, vector.v1);
+		let center = TV3_Center(vector.v0, vector.v1);
+		let length = TV3_Distance(vector.v0, vector.v1);
 
-		var new_v = VVector3v(1, 0, 0);
+		let new_v = VVector3v(1, 0, 0);
 		new_v.applyQuaternion(new_direction);
 		new_v.multiplyScalar(length/2);
 
@@ -1236,26 +1234,26 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixlength) {
-		var new_length = vector.fixlength;
-		//var length_vector = run_vectors[vector.fixlength];
+		let new_length = vector.fixlength;
+		//let length_vector = run_vectors[vector.fixlength];
 		//if (length_vector)
 		//	new_length = TV3_Distance(length_vector.v0, length_vector.v1);
 
-		var v = VVector3(vector.v1);
+		let v = VVector3(vector.v1);
 		v.sub(vector.v0);
 
-		var center = VVector3(v);
+		let center = VVector3(v);
 		center.multiplyScalar(0.5);
 		center.add(vector.v0);
 
 		v.normalize();
 		v.multiplyScalar(new_length);
 
-		var new_v0 = VVector3(v);
+		let new_v0 = VVector3(v);
 		new_v0.multiplyScalar(-0.5);
 		new_v0.add(center);
 
-		var new_v1 = VVector3(v);
+		let new_v1 = VVector3(v);
 		new_v1.multiplyScalar(0.5);
 		new_v1.add(center);
 
@@ -1266,8 +1264,8 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixprojection) {
-		var original_vector = run_vectors[vector.fixprojection[0]];
-		var projection_vector = run_vectors[vector.fixprojection[1]];
+		let original_vector = run_vectors[vector.fixprojection[0]];
+		let projection_vector = run_vectors[vector.fixprojection[1]];
 
 		vector.v0.copy(TV3_NearestPointOnLine(original_vector.v0, projection_vector.v0, projection_vector.v1));
 		vector.v0.setZ(0.1);
@@ -1275,7 +1273,7 @@ function run_constraints(vector) {
 		vector.v1.setZ(0.1);
 
 		if (vector.projection_v0) {
-			var xaxis_geometry = new THREE.Geometry();
+			let xaxis_geometry = new THREE.Geometry();
 
 			xaxis_geometry.vertices.push(
 				VVector3(vector.v0),
@@ -1286,7 +1284,7 @@ function run_constraints(vector) {
 		}
 
 		if (vector.projection_v1) {
-			var xaxis_geometry = new THREE.Geometry();
+			let xaxis_geometry = new THREE.Geometry();
 
 			xaxis_geometry.vertices.push(
 				VVector3(vector.v1),
@@ -1328,8 +1326,8 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixorigin) {
-		var transition = false;
-		for (var t in vector.transitions) {
+		let transition = false;
+		for (let t in vector.transitions) {
 			if (!vector.transitions.hasOwnProperty(t)) {
 				continue;
 			}
@@ -1348,7 +1346,7 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixbase) {
-		var base_vector = run_vectors[vector.fixbase];
+		let base_vector = run_vectors[vector.fixbase];
 		if (base_vector) {
 			vector.v1.copy(VVector3(vector.v1).sub(vector.v0).add(base_vector.v1));
 			vector.v0.copy(base_vector.v1);
@@ -1358,7 +1356,7 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixhead) {
-		var head_vector = run_vectors[vector.fixhead];
+		let head_vector = run_vectors[vector.fixhead];
 		if (!head_vector)
 			console.error("Couldn't find head vector: " + vector.fixhead);
 
@@ -1368,14 +1366,14 @@ function run_constraints(vector) {
 	}
 
 	if (vector.fixheadsum) {
-		var sum = VVector3v(0, 0, 0);
+		let sum = VVector3v(0, 0, 0);
 
-		for (var i in vector.fixheadsum) {
+		for (let i in vector.fixheadsum) {
 			if (!vector.fixheadsum.hasOwnProperty(i)) {
 				continue;
 			}
 
-			var term_vector = run_vectors[vector.fixheadsum[i]];
+			let term_vector = run_vectors[vector.fixheadsum[i]];
 			if (!term_vector)
 				console.error("Couldn't find head vector: " + vector.fixheadsum[i]);
 
@@ -1405,9 +1403,9 @@ function run_constraints(vector) {
 		arrange = true;
 	}
 
-	for (var j = 0; j < vector.transitions.length; j++) {
-		var transition = vector.transitions[j];
-		var lerp = RemapVal(clock.getElapsedTime(), transition.start_time, transition.end_time, 0, 1);
+	for (let j = 0; j < vector.transitions.length; j++) {
+		let transition = vector.transitions[j];
+		let lerp = RemapVal(clock.getElapsedTime(), transition.start_time, transition.end_time, 0, 1);
 
 		if (lerp >= 1) {
 			arrange = true;
@@ -1444,7 +1442,7 @@ function render() {
 
 	raycaster.setFromCamera( mouse, camera );
 
-	var intersects = raycaster.intersectObjects( raycast_objects, true);
+	let intersects = raycaster.intersectObjects( raycast_objects, true);
 
 	if (intersects.length > 0) {
 		currentIntersected = intersects[ 0 ].object;
@@ -1463,9 +1461,9 @@ function render() {
 		mesh_pacman.material.map = texture_pacman2;
 	}
 
-	var clyde_to_pacman = VVector3(mesh_pacman.position).sub(mesh_clyde.position).normalize();
-	var dot_up = clyde_to_pacman.dot(VVector3v(0, 1, 0));
-	var dot_right = clyde_to_pacman.dot(VVector3v(1, 0, 0));
+	let clyde_to_pacman = VVector3(mesh_pacman.position).sub(mesh_clyde.position).normalize();
+	let dot_up = clyde_to_pacman.dot(VVector3v(0, 1, 0));
+	let dot_right = clyde_to_pacman.dot(VVector3v(1, 0, 0));
 
 	if (dot_up > 0) {
 		if (dot_right > 0.5) {
@@ -1486,12 +1484,12 @@ function render() {
 	}
 
 	// Handle animations
-	for (var k in run_vectors) {
+	for (let k in run_vectors) {
 		if (!run_vectors.hasOwnProperty(k)) {
 			continue;
 		}
 
-		var vector = run_vectors[k];
+		let vector = run_vectors[k];
 
 		if (vector.kill) {
 			vector.vector.material.transparent = true;
@@ -1515,7 +1513,7 @@ function render() {
 			}
 		}
 
-		var arrange = run_constraints(vector);
+		let arrange = run_constraints(vector);
 
 		if (arrange) {
 			arrangeVVector(k);
@@ -1536,24 +1534,24 @@ function render() {
 		update_coords_label(vector);
 
 		if (vector.show_multiples) {
-			var vector_length = VVector3(vector.v1).sub(vector.v0).length();
+			let vector_length = VVector3(vector.v1).sub(vector.v0).length();
 
-			var other_vector = run_vectors[vector.show_multiples];
-			var other_vector_length = VVector3(other_vector.v1).sub(other_vector.v0).length();
+			let other_vector = run_vectors[vector.show_multiples];
+			let other_vector_length = VVector3(other_vector.v1).sub(other_vector.v0).length();
 
-			var num_multiples = Math.floor(vector_length/other_vector_length);
+			let num_multiples = Math.floor(vector_length/other_vector_length);
 
 			while (vector.multiples.length > num_multiples) {
-				var last_multiple = vector.multiples[vector.multiples.length-1];
+				let last_multiple = vector.multiples[vector.multiples.length-1];
 				parentTransform.remove(last_multiple.body);
 				parentTransform.remove(last_multiple.head);
 				vector.multiples.pop();
 			}
 
-			var arrow_material = new THREE.MeshBasicMaterial( { color: other_vector.vector.material.color } );
+			let arrow_material = new THREE.MeshBasicMaterial( { color: other_vector.vector.material.color } );
 
 			while (vector.multiples.length < num_multiples) {
-				var multiple = {
+				let multiple = {
 					body: new THREE.Mesh( vector_geometry, arrow_material ),
 					head: new THREE.Mesh( head_geometry, arrow_material )
 				};
@@ -1563,16 +1561,16 @@ function render() {
 				vector.multiples.push(multiple);
 			}
 
-			var vec_start = VVector3(vector.v0);
-			var vec_direction = VVector3(vector.v1).sub(vector.v0).normalize().multiplyScalar(other_vector_length);
+			let vec_start = VVector3(vector.v0);
+			let vec_direction = VVector3(vector.v1).sub(vector.v0).normalize().multiplyScalar(other_vector_length);
 
-			for (var k = 0; k < vector.multiples.length; k++) {
+			for (let k = 0; k < vector.multiples.length; k++) {
 				vector.multiples[k].body.position.copy(vec_start);
 				vector.multiples[k].body.position.setZ(0.1);
 				vector.multiples[k].head.position.copy(VVector3(vec_start).add(vec_direction));
 				vector.multiples[k].head.position.setZ(0.1);
 
-				var direction = VVector3(vector.v1).sub(vector.v0).normalize();
+				let direction = VVector3(vector.v1).sub(vector.v0).normalize();
 
 				vector.multiples[k].body.scale.setX(other_vector_length - 0.25);
 				vector.multiples[k].body.scale.setY(0.5);
@@ -1593,7 +1591,7 @@ function render() {
 			}
 		} else {
 			while (vector.multiples.length) {
-				var last_multiple = vector.multiples[vector.multiples.length-1];
+				let last_multiple = vector.multiples[vector.multiples.length-1];
 				parentTransform.remove(last_multiple.body);
 				parentTransform.remove(last_multiple.head);
 				vector.multiples.pop();
@@ -1601,7 +1599,7 @@ function render() {
 		}
 
 		if (vector.name_label !== undefined && vector.name_label !== null) {
-			var scale = VVector3v(1, 0, 0).multiplyScalar(vector.name_label.text_size);
+			let scale = VVector3v(1, 0, 0).multiplyScalar(vector.name_label.text_size);
 			vector.name_label.position.copy(
 				VVector3(vector.v1)
 					.sub(VVector3(vector.v0))
@@ -1624,11 +1622,11 @@ function render() {
 	}
 
 	if (transform_grid_matrix) {
-		var matrix = run_matrices[transform_grid_matrix];
-		var vx = VVector3(run_vectors[matrix[0]].v1).sub(run_vectors[matrix[0]].v0);
-		var vy = VVector3(run_vectors[matrix[1]].v1).sub(run_vectors[matrix[1]].v0);
+		let matrix = run_matrices[transform_grid_matrix];
+		let vx = VVector3(run_vectors[matrix[0]].v1).sub(run_vectors[matrix[0]].v0);
+		let vy = VVector3(run_vectors[matrix[1]].v1).sub(run_vectors[matrix[1]].v0);
 
-		var M = new THREE.Matrix4().makeBasis(vx, vy, VVector3v(0, 0, 0));
+		let M = new THREE.Matrix4().makeBasis(vx, vy, VVector3v(0, 0, 0));
 		transform_grid.matrix.identity().multiply(M);
 		transform_grid_strong.matrix.identity().multiply(M);
 
@@ -1639,145 +1637,145 @@ function render() {
 	renderer.render( scene, camera );
 
 	if (Scalar.pages[current_page].info_vector_distance) {
-		var vector_a_name = Scalar.pages[current_page].info_vector_distance[0];
-		var vector_b_name = Scalar.pages[current_page].info_vector_distance[1];
-		var vector_c_name = Scalar.pages[current_page].info_vector_distance[2];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var vector_c = run_vectors[vector_c_name];
-		var distance = TV3_Distance(vector_b.v1, vector_a.v1);
-		var a = run_vectors[vector_a_name].name_label_text;
-		var b = run_vectors[vector_b_name].name_label_text;
-		var c = run_vectors[vector_c_name].name_label_text;
+		let vector_a_name = Scalar.pages[current_page].info_vector_distance[0];
+		let vector_b_name = Scalar.pages[current_page].info_vector_distance[1];
+		let vector_c_name = Scalar.pages[current_page].info_vector_distance[2];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let vector_c = run_vectors[vector_c_name];
+		let distance = TV3_Distance(vector_b.v1, vector_a.v1);
+		let a = run_vectors[vector_a_name].name_label_text;
+		let b = run_vectors[vector_b_name].name_label_text;
+		let c = run_vectors[vector_c_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'>|<em>" + c + "</em>| = |<em>" + b + " - " + a + "</em>| = " + distance.toFixed(3) + "</span><br />"
 			+ b + ".sub(" + a + ").length();";
 	}
 
 	if (Scalar.pages[current_page].info_scalar_multiplication) {
-		var vector_a_name = Scalar.pages[current_page].info_scalar_multiplication[1];
-		var vector_b_name = Scalar.pages[current_page].info_scalar_multiplication[0];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
+		let vector_a_name = Scalar.pages[current_page].info_scalar_multiplication[1];
+		let vector_b_name = Scalar.pages[current_page].info_scalar_multiplication[0];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " = " + ratio.toFixed(3) + run_vectors[vector_b_name].name_label_text + "</em></span><br />"
 			+ run_vectors[vector_a_name].name_label_text + " = " + run_vectors[vector_b_name].name_label_text + ".multiplyScalar(" + ratio.toFixed(3) + ");";
 	}
 
 	if (Scalar.pages[current_page].info_normalize) {
-		var vector_a_name = Scalar.pages[current_page].info_normalize[1];
-		var vector_b_name = Scalar.pages[current_page].info_normalize[0];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
+		let vector_a_name = Scalar.pages[current_page].info_normalize[1];
+		let vector_b_name = Scalar.pages[current_page].info_normalize[0];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let ratio = TV3_Distance(vector_a.v0, vector_a.v1)/TV3_Distance(vector_b.v0, vector_b.v1);
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " = a · </em>1/|<em>" + run_vectors[vector_b_name].name_label_text + "</em>|</span><br />"
 			+ run_vectors[vector_a_name].name_label_text + " = " + run_vectors[vector_b_name].name_label_text + ".normalize();";
 	}
 
 	if (Scalar.pages[current_page].info_dot_product) {
-		var vector_a_name = Scalar.pages[current_page].info_dot_product[0];
-		var vector_b_name = Scalar.pages[current_page].info_dot_product[1];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var dot = VVector3(vector_a.v0).sub(vector_a.v1).dot(VVector3(vector_b.v0).sub(vector_b.v1));
+		let vector_a_name = Scalar.pages[current_page].info_dot_product[0];
+		let vector_b_name = Scalar.pages[current_page].info_dot_product[1];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let dot = VVector3(vector_a.v0).sub(vector_a.v1).dot(VVector3(vector_b.v0).sub(vector_b.v1));
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + run_vectors[vector_a_name].name_label_text + " · " + run_vectors[vector_b_name].name_label_text + " = " + dot.toFixed(3) + "</em></span><br />"
 			+ run_vectors[vector_a_name].name_label_text + "_dot_" + run_vectors[vector_b_name].name_label_text + " = " + run_vectors[vector_a_name].name_label_text + ".dot(" + run_vectors[vector_b_name].name_label_text + ");";
 	}
 
 	if (Scalar.pages[current_page].info_dot_product_angle) {
-		var vector_a_name = Scalar.pages[current_page].info_dot_product_angle[0];
-		var vector_b_name = Scalar.pages[current_page].info_dot_product_angle[1];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
-		var vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
-		var vector3_a_length = vector3_a.length();
-		var vector3_b_length = vector3_b.length();
-		var dot = vector3_a.normalize().dot(vector3_b.normalize());
-		var a = run_vectors[vector_a_name].name_label_text;
-		var b = run_vectors[vector_b_name].name_label_text;
+		let vector_a_name = Scalar.pages[current_page].info_dot_product_angle[0];
+		let vector_b_name = Scalar.pages[current_page].info_dot_product_angle[1];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		let vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
+		let vector3_a_length = vector3_a.length();
+		let vector3_b_length = vector3_b.length();
+		let dot = vector3_a.normalize().dot(vector3_b.normalize());
+		let a = run_vectors[vector_a_name].name_label_text;
+		let b = run_vectors[vector_b_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + " · " + b + " = </em>|<em>" + a + "</em>| × |<em>" + b + "</em>| × cos(<em>θ</em>)<br /> = "
 			+ vector3_a_length.toFixed(1) + " × " + vector3_b_length.toFixed(1) + " × " + dot.toFixed(1) + " = " + (vector3_a_length*vector3_b_length*dot).toFixed(3) + "</span><br />"
 			+ a + "_dot_" + b + " = " + a + ".dot(" + b + ");";
 	}
 
 	if (Scalar.pages[current_page].info_dot_product_lengthsqr) {
-		var vector_a_name = Scalar.pages[current_page].info_dot_product_lengthsqr;
-		var vector_a = run_vectors[vector_a_name];
-		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
-		var vector3_a_length = vector3_a.length();
-		var dot = vector3_a.normalize().dot(vector3_a.normalize());
-		var a = run_vectors[vector_a_name].name_label_text;
+		let vector_a_name = Scalar.pages[current_page].info_dot_product_lengthsqr;
+		let vector_a = run_vectors[vector_a_name];
+		let vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		let vector3_a_length = vector3_a.length();
+		let dot = vector3_a.normalize().dot(vector3_a.normalize());
+		let a = run_vectors[vector_a_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + " · " + a + " = </em>|<em>" + a + "</em>| × |<em>" + a + "</em>| × cos(<em>θ</em>)<br /> = "
 			+ vector3_a_length.toFixed(1) + " × " + vector3_a_length.toFixed(1) + " × " + dot.toFixed(1) + " = " + (vector3_a_length*vector3_a_length*dot).toFixed(3) + "</span><br />"
 			+ "length_" + a + "_sqr = " + a + ".dot(" + a + ");";
 	}
 
 	if (Scalar.pages[current_page].info_components) {
-		var vector_name = Scalar.pages[current_page].info_components;
-		var vector = run_vectors[vector_name];
-		var vector3 = VVector3(vector.v1).sub(vector.v0);
-		var a = run_vectors[vector_name].name_label_text;
+		let vector_name = Scalar.pages[current_page].info_components;
+		let vector = run_vectors[vector_name];
+		let vector3 = VVector3(vector.v1).sub(vector.v0);
+		let a = run_vectors[vector_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'><em>" + a + "<sub>x</sub> = " + vector3.x.toFixed(3) + "</span><br />"
 			+ a + ".x = " + vector3.x.toFixed(3) + ";<br />";
 	}
 
 	if (Scalar.pages[current_page].info_dot_product_projection) {
-		var vector_a_name = Scalar.pages[current_page].info_dot_product_projection[0];
-		var vector_b_name = Scalar.pages[current_page].info_dot_product_projection[1];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
-		var vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
-		var dot = vector3_a.dot(vector3_b);
-		var vector3_a_length = vector3_a.length();
-		var vector3_b_length = vector3_b.length();
-		var dot_normalized = vector3_a.normalize().dot(vector3_b.normalize());
-		var a = run_vectors[vector_a_name].name_label_text;
-		var b = run_vectors[vector_b_name].name_label_text;
+		let vector_a_name = Scalar.pages[current_page].info_dot_product_projection[0];
+		let vector_b_name = Scalar.pages[current_page].info_dot_product_projection[1];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		let vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
+		let dot = vector3_a.dot(vector3_b);
+		let vector3_a_length = vector3_a.length();
+		let vector3_b_length = vector3_b.length();
+		let dot_normalized = vector3_a.normalize().dot(vector3_b.normalize());
+		let a = run_vectors[vector_a_name].name_label_text;
+		let b = run_vectors[vector_b_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'>(<em>" + a + "</em> · <em>" + b + "</em>) <em>" + b + " = </em>(" + dot.toFixed(2) + ") <em>" + b + "</em><br /><br />";
 	}
 
 	if (Scalar.pages[current_page].info_projection) {
-		var vector_a_name = Scalar.pages[current_page].info_projection[0];
-		var vector_b_name = Scalar.pages[current_page].info_projection[1];
-		var vector_a = run_vectors[vector_a_name];
-		var vector_b = run_vectors[vector_b_name];
-		var vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
-		var vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
-		var dot = vector3_a.dot(vector3_b) / vector3_b.dot(vector3_b);
-		var vector3_a_length = vector3_a.length();
-		var vector3_b_length = vector3_b.length();
-		var a = run_vectors[vector_a_name].name_label_text;
-		var b = run_vectors[vector_b_name].name_label_text;
+		let vector_a_name = Scalar.pages[current_page].info_projection[0];
+		let vector_b_name = Scalar.pages[current_page].info_projection[1];
+		let vector_a = run_vectors[vector_a_name];
+		let vector_b = run_vectors[vector_b_name];
+		let vector3_a = VVector3(vector_a.v0).sub(vector_a.v1);
+		let vector3_b = VVector3(vector_b.v0).sub(vector_b.v1);
+		let dot = vector3_a.dot(vector3_b) / vector3_b.dot(vector3_b);
+		let vector3_a_length = vector3_a.length();
+		let vector3_b_length = vector3_b.length();
+		let a = run_vectors[vector_a_name].name_label_text;
+		let b = run_vectors[vector_b_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'>(<em>" + a + "</em> · <em>" + b + "</em> / <em>" + b + "</em> · <em>" + b + "</em>) <em>" + b + "</em> = </em>(" + dot.toFixed(2) + ") <em>" + b + "</em><br /><br />";
 	}
 
 	if (Scalar.pages[current_page].info_rotation_by) {
-		var vector_name = Scalar.pages[current_page].info_rotation_by;
-		var vector = run_vectors[vector_name];
-		var vector3 = VVector3(vector.v1).sub(vector.v0);
-		var angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
-		var a = run_vectors[vector_name].name_label_text;
+		let vector_name = Scalar.pages[current_page].info_rotation_by;
+		let vector = run_vectors[vector_name];
+		let vector3 = VVector3(vector.v1).sub(vector.v0);
+		let angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
+		let a = run_vectors[vector_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'>Rotation by " + angle.toFixed(2) + "°</span>";
 	}
 
 	if (Scalar.pages[current_page].info_general_matrix_construction) {
-		var vector_name_a = Scalar.pages[current_page].info_general_matrix_construction[0];
-		var vector_name_b = Scalar.pages[current_page].info_general_matrix_construction[1];
-		var vector_a = run_vectors[vector_name_a];
-		var vector_b = run_vectors[vector_name_b];
-		var a = run_vectors[vector_name_a].name_label_text;
-		var b = run_vectors[vector_name_b].name_label_text;
+		let vector_name_a = Scalar.pages[current_page].info_general_matrix_construction[0];
+		let vector_name_b = Scalar.pages[current_page].info_general_matrix_construction[1];
+		let vector_a = run_vectors[vector_name_a];
+		let vector_b = run_vectors[vector_name_b];
+		let a = run_vectors[vector_name_a].name_label_text;
+		let b = run_vectors[vector_name_b].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'>M = [" + a + ", " + b + "]</span><br />"
 			+ "new THREE.Matrix4().makeBasis(" + a + ", " + b + ");<br />";
 	}
 
 	if (Scalar.pages[current_page].info_rotation_matrix_construction) {
-		var vector_name = Scalar.pages[current_page].info_rotation_matrix_construction;
-		var vector = run_vectors[vector_name];
-		var vector3 = VVector3(vector.v1).sub(vector.v0);
-		var angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
-		var a = run_vectors[vector_name].name_label_text;
+		let vector_name = Scalar.pages[current_page].info_rotation_matrix_construction;
+		let vector = run_vectors[vector_name];
+		let vector3 = VVector3(vector.v1).sub(vector.v0);
+		let angle = Math.atan2(vector3.y, vector3.x) / 2 / Math.PI * 360;
+		let a = run_vectors[vector_name].name_label_text;
 		info_div.innerHTML = "<span style='font-family: serif'>Rotation by " + angle.toFixed(2) + "°</span><br />"
 			+ "new THREE.Matrix4().makeRotationZ(" + Math.atan2(vector3.y, vector3.x).toFixed(2) + ");<br />";
 	}
