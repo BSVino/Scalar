@@ -27,3 +27,8 @@ scalar_read_file = function(file) {
 	return result;
 }
 
+scalar_assert = function(condition, message) {
+	if (!condition) {
+		throw message || "Assert failed";
+	}
+}
