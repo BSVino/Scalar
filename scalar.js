@@ -1,8 +1,19 @@
 var Scalar = {};
 
-var container, stats;
-var camera, scene, raycaster, renderer, parentTransform, sphereInter;
-var rotate_sphere, rotating = false, rotate_mouse_start_x, rotate_mouse_start_y, rotate_horizontal = 0, rotate_vertical = 0;
+var container;
+var stats;
+var camera;
+var scene;
+var raycaster;
+var renderer;
+var parentTransform;
+var sphereInter;
+var rotate_sphere;
+var rotating = false;
+var rotate_mouse_start_x;
+var rotate_mouse_start_y;
+var rotate_horizontal = 0;
+var rotate_vertical = 0;
 
 var mouse = new THREE.Vector2();
 var radius = 100;
@@ -15,7 +26,8 @@ var dt;
 var TRANSITION_SPEED = 2;
 
 var dragging = false;
-var drag_object, drag_object_type;
+var drag_object;
+var drag_object_type;
 var drag_object_offset = new THREE.Vector3();
 var drag_object_handle = new THREE.Vector3();
 var drag_object_v1 = new THREE.Vector3();
@@ -24,10 +36,12 @@ var grid_fade = 0;
 var grid;
 var grid_strong;
 
-var pages;
 var current_page;
 var init_vectors;
+
+// Maps vector names to runtime data
 var run_vectors = {};
+
 var run_matrices = {};
 var raycast_objects = [];
 
@@ -52,15 +66,15 @@ var texture_clyde_dl;
 
 
 function mesh_from_name(name) {
-	if (name == "mario") {
+	if (name === "mario") {
 		return mesh_mario;
 	}
 
-	if (name == "pacman") {
+	if (name === "pacman") {
 		return mesh_pacman;
 	}
 
-	if (name == "clyde") {
+	if (name === "clyde") {
 		return mesh_clyde;
 	}
 
@@ -69,7 +83,6 @@ function mesh_from_name(name) {
 }
 
 function visualvectors_init() {
-	alert(Scalar.pages[0]);
 	Scalar.pages = Scalar.get_slides();
 
 	init();
@@ -127,8 +140,8 @@ var length_text_attr = {
 	size: 60,
 	height: 0,
 	curveSegments: 3,
-	font: 'droid serif',
-	weight: 'normal',
+	font: "droid serif",
+	weight: "normal",
 	bevelEnabled: false
 };
 
@@ -136,8 +149,8 @@ var angle_text_attr = {
 	size: 60,
 	height: 0,
 	curveSegments: 3,
-	font: 'droid serif',
-	weight: 'normal',
+	font: "droid serif",
+	weight: "normal",
 	bevelEnabled: false
 };
 
@@ -148,7 +161,7 @@ function array_swap_pop(array, index) {
 
 function remove_raycast_object(object) {
 	for (var k = 0; k < raycast_objects.length; k++) {
-		if (object == raycast_objects[k]) {
+		if (object === raycast_objects[k]) {
 			array_swap_pop(raycast_objects, k);
 			return;
 		}
@@ -189,6 +202,10 @@ function page_setup(page) {
 	}
 
 	for (var vname in run_vectors) {
+		if (!run_vectors.hasOwnProperty(vname)) {
+			continue;
+		}
+
 		var v = run_vectors[vname];
 
 		if (!v.kill) {
@@ -593,17 +610,19 @@ var center_div;
 var pagenumber_div;
 
 function init() {
-	container = document.getElementById( 'container' );
+	container = document.getElementById( "container" );
 
-	info_div = document.getElementById( 'info' );
-	center_div = document.getElementById( 'center' );
-	pagenumber_div = document.getElementById( 'pagenumber' );
+	info_div = document.getElementById( "info" );
+	center_div = document.getElementById( "center" );
+	pagenumber_div = document.getElementById( "pagenumber" );
 
 	var width = window.innerWidth;
 	var height = window.innerHeight;
-	var ratio = height/width;
-	var size = 10;
+
+	//var ratio = height/width;
+	//var size = 10;
 	//camera = new THREE.OrthographicCamera( -size, size, size*ratio, -size*ratio, -1, 10000 );
+
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
 
 	scene = new THREE.Scene();
@@ -648,8 +667,9 @@ function init() {
 	var grid_geometry = new THREE.Geometry();
 
 	for (var k = -GRID_MAX+1; k < GRID_MAX; k++) {
-		if (k == 0)
+		if (k === 0) {
 			continue;
+		}
 
 		grid_geometry.vertices.push(
 			new THREE.Vector3( k, -GRID_MAX, 0 ),
@@ -696,28 +716,25 @@ function init() {
 	sphereInter.visible = false;
 	scene.add( sphereInter );
 
-	var point = new THREE.Vector3();
-	var direction = new THREE.Vector3();
-
 	var geometry = new THREE.Geometry( );
 	geometry.vertices.push(new THREE.Vector3(0, 0, 0));
 	geometry.vertices.push(new THREE.Vector3(1, 0, 0));
 
 	parentTransform = new THREE.Object3D();
 
-	vector_geometry = new THREE.CylinderGeometry(.03, .03, 1, 16);
+	vector_geometry = new THREE.CylinderGeometry(0.03, 0.03, 1, 16);
 	vector_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	vector_geometry.translate(0.5, 0, 0);
 
-	handle_geometry = new THREE.SphereGeometry(.15, 4, 4);
-	head_handle_geometry = new THREE.SphereGeometry(.15, 4, 4);
+	handle_geometry = new THREE.SphereGeometry(0.15, 4, 4);
+	head_handle_geometry = new THREE.SphereGeometry(0.15, 4, 4);
 	head_handle_geometry.translate(-0.15, 0, 0);
 
-	vector_handle_geometry = new THREE.CylinderGeometry(.08, .08, 1, 16);
+	vector_handle_geometry = new THREE.CylinderGeometry(0.08, 0.08, 1, 16);
 	vector_handle_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	vector_handle_geometry.translate(0.5, 0, 0);
 
-	head_geometry = new THREE.CylinderGeometry(.08, 0, 0.25, 16);
+	head_geometry = new THREE.CylinderGeometry(0.08, 0, 0.25, 16);
 	head_geometry.applyMatrix( new THREE.Matrix4().makeRotationZ( THREE.Math.degToRad( 90 ) ) );
 	head_geometry.translate(-0.125, 0, 0);
 
@@ -744,13 +761,13 @@ function init() {
 	container.appendChild( stats.domElement );
 */
 
-	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-	document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-	document.addEventListener( 'keydown', onDocumentKeyDown, false );
-	document.addEventListener( 'keyup', onDocumentKeyUp, false );
+	document.addEventListener( "mousemove", onDocumentMouseMove, false );
+	document.addEventListener( "mousedown", onDocumentMouseDown, false );
+	document.addEventListener( "mouseup", onDocumentMouseUp, false );
+	document.addEventListener( "keydown", onDocumentKeyDown, false );
+	document.addEventListener( "keyup", onDocumentKeyUp, false );
 
-	window.addEventListener( 'resize', onWindowResize, false );
+	window.addEventListener( "resize", onWindowResize, false );
 }
 
 function onWindowResize() {
@@ -772,19 +789,19 @@ function onDocumentMouseMove( event ) {
 		var world_position = fromScreenPosition(screen_position, camera);
 		world_position.sub(drag_object_offset);
 
-		if (drag_object_type == "body") {
+		if (drag_object_type === "body") {
 			var difference = VVector3(world_position);
 			difference.sub(run_vectors[drag_object].v0);
 			run_vectors[drag_object].v0 = world_position;
 			run_vectors[drag_object].v1.add(difference);
-		} else if (drag_object_type == "head")
+		} else if (drag_object_type === "head")
 			run_vectors[drag_object].v1 = world_position;
-		else if (drag_object_type == "head_offset") {
+		else if (drag_object_type === "head_offset") {
 			var difference = VVector3(drag_object_v1).sub(drag_object_handle);
 			difference.add(fromScreenPosition(screen_position, camera));
 
 			run_vectors[drag_object].v1.copy(difference);
-		} else if (drag_object_type == "base") {
+		} else if (drag_object_type === "base") {
 			run_vectors[drag_object].v0 = world_position;
 		}
 
@@ -808,7 +825,7 @@ function onDocumentMouseDown( event ) {
 		return;
 	}
 
-	if (intersects[0].object == rotate_sphere) {
+	if (intersects[0].object === rotate_sphere) {
 		rotating = true;
 		rotate_mouse_start_x = mouse.x;
 		rotate_mouse_start_y = mouse.y;
@@ -885,7 +902,7 @@ function animate() {
 }
 
 function vector_transition(vector, transition, lerp) {
-	if (transition.type == "length") {
+	if (transition.type === "length") {
 		var new_length = RemapVal(lerp, 0, 1, transition.start_value, transition.end_value);
 
 		var v = VVector3(vector.v1);
@@ -908,7 +925,7 @@ function vector_transition(vector, transition, lerp) {
 
 		vector.v0 = new_v0;
 		vector.v1 = new_v1;
-	} else if (transition.type == "center") {
+	} else if (transition.type === "center") {
 		var center_path = VVector3(transition.end_value);
 		center_path.sub(transition.start_value);
 		center_path.multiplyScalar(lerp);
@@ -927,7 +944,7 @@ function vector_transition(vector, transition, lerp) {
 
 		vector.v0 = new_v0;
 		vector.v1 = new_v1;
-	} else if (transition.type == "direction") {
+	} else if (transition.type === "direction") {
 		var new_direction = new THREE.Quaternion();
 		THREE.Quaternion.slerp(transition.start_value, transition.end_value, new_direction, lerp);
 
@@ -950,7 +967,7 @@ function vector_transition(vector, transition, lerp) {
 }
 
 function update_length_label(vector) {
-	if (vector.length_label == undefined || vector.length_label == null) {
+	if (vector.length_label === undefined || vector.length_label === null) {
 		return;
 	}
 
@@ -969,7 +986,7 @@ function update_length_label(vector) {
 		new_length = Math.round(new_length);
 	}
 
-	if (vector.old_length == null || vector.old_length != new_length) {
+	if (vector.old_length === null || vector.old_length !== new_length) {
 		vector.length_label.geometry = new THREE.TextGeometry("length: " + new_length.toFixed(2), length_text_attr);
 	}
 
@@ -977,7 +994,7 @@ function update_length_label(vector) {
 }
 
 function update_angle_label(vector) {
-	if (vector.angle_label == undefined || vector.angle_label == null) {
+	if (vector.angle_label === undefined || vector.angle_label === null) {
 		return;
 	}
 
@@ -1003,7 +1020,7 @@ function update_angle_label(vector) {
 		);
 
 		if (average_vector.x < 0) {
-			vector.angle_label.position.add(VVector3v(-1.1, 0, 0).multiplyScalar(vector.angle_label.text_size))
+			vector.angle_label.position.add(VVector3v(-1.1, 0, 0).multiplyScalar(vector.angle_label.text_size));
 		}
 	} else {
 		vector.angle_label.position.copy(
@@ -1038,7 +1055,7 @@ function update_angle_label(vector) {
 		new_angle_degrees = -new_angle_degrees;
 	}
 
-	if (vector.old_angle == null || vector.old_angle != new_angle) {
+	if (vector.old_angle === null || vector.old_angle !== new_angle) {
 		vector.angle_label.geometry = new THREE.TextGeometry("angle: " + new_angle_degrees.toFixed(2) + "°", length_text_attr);
 
 		vector.angle_circle.geometry = new THREE.RingGeometry(0.7, 0.75, 30, 1, 0, new_angle);
@@ -1067,7 +1084,7 @@ function update_angle_label(vector) {
 }
 
 function update_coords_label(vector) {
-	if (vector.head_coord_label != undefined && vector.head_coord_label != null) {
+	if (vector.head_coord_label !== undefined && vector.head_coord_label !== null) {
 		var offset = VVector3v(0.4, 0.2, -0.1);
 		vector.head_coord_label.position.copy(
 			VVector3(vector.v1)
@@ -1090,13 +1107,13 @@ function update_coords_label(vector) {
 		if (shift_down && Math.abs(Math.round(vector.v1.y) - vector.v1.y) < 0.1)
 			y = Math.round(vector.v1.y);
 
-		if (vector.old_head_coords == null || vector.old_head_coords != new_coord)
+		if (vector.old_head_coords === null || vector.old_head_coords !== new_coord)
 			vector.head_coord_label.geometry = new THREE.TextGeometry("(" + x.toFixed(2) + ", " + y.toFixed(2) + ")", length_text_attr);
 
 		vector.old_head_coords = new_coord;
 	}
 
-	if (vector.tail_coord_label != undefined && vector.tail_coord_label != null) {
+	if (vector.tail_coord_label !== undefined && vector.tail_coord_label !== null) {
 		var offset = VVector3v(-1.2, -0.2, -0.1).multiplyScalar(vector.tail_coord_label.text_size);
 		vector.tail_coord_label.position.copy(
 			VVector3(vector.v0)
@@ -1123,7 +1140,7 @@ function update_coords_label(vector) {
 			y = Math.round(vector.v0.y);
 		}
 
-		if (vector.old_tail_coords == null || vector.old_tail_coords != new_coord) {
+		if (vector.old_tail_coords === null || vector.old_tail_coords !== new_coord) {
 			vector.tail_coord_label.geometry = new THREE.TextGeometry("(" + x.toFixed(2) + ", " + y.toFixed(2) + ")", length_text_attr);
 		}
 
@@ -1134,11 +1151,11 @@ function update_coords_label(vector) {
 function run_constraints(vector) {
 	var arrange = false;
 
-	if (vector.transform && run_vectors[drag_object] != vector) {
-		var transform_vector = run_vectors[vector.transform[0]]
+	if (vector.transform && run_vectors[drag_object] !== vector) {
+		var transform_vector = run_vectors[vector.transform[0]];
 		if (transform_vector) {
 			var matrix = vector.transform[1];
-			if (typeof(matrix) === 'string') {
+			if (typeof(matrix) === "string") {
 				if (run_matrices && run_matrices[matrix]) {
 					var vx = run_vectors[run_matrices[matrix][0]].v1;
 					var vy = run_vectors[run_matrices[matrix][1]].v1;
@@ -1154,7 +1171,7 @@ function run_constraints(vector) {
 				}
 			}
 			else if (Array.isArray(matrix)) {
-				if (matrix[0] == 'scaleofx') {
+				if (matrix[0] === "scaleofx") {
 					var scale = run_vectors[matrix[1]].v1.dot(VVector3v(1, 0, 0));
 					matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
 
@@ -1166,7 +1183,7 @@ function run_constraints(vector) {
 					);
 
 					arrange = true;
-				} else if (matrix[0] == 'scaleofy') {
+				} else if (matrix[0] === "scaleofy") {
 					var scale = run_vectors[matrix[1]].v1.dot(VVector3v(0, 1, 0));
 					matrix = new THREE.Matrix4().makeBasis(VVector3v(scale, 0, 0), VVector3v(0, scale, 0), VVector3v(0, 0, scale));
 
@@ -1193,7 +1210,7 @@ function run_constraints(vector) {
 		}
 	}
 
-	if (vector.fixdirection && run_vectors[drag_object] != vector) {
+	if (vector.fixdirection && run_vectors[drag_object] !== vector) {
 		var dir_vector = run_vectors[vector.fixdirection];
 		if (!dir_vector) {
 			console.error("Couldn't find direction vector: " + vector.fixdirection);
@@ -1313,7 +1330,11 @@ function run_constraints(vector) {
 	if (vector.fixorigin) {
 		var transition = false;
 		for (var t in vector.transitions) {
-			if (vector.transitions[t].type == "center") {
+			if (!vector.transitions.hasOwnProperty(t)) {
+				continue;
+			}
+
+			if (vector.transitions[t].type === "center") {
 				transition = true;
 				break;
 			}
@@ -1350,6 +1371,10 @@ function run_constraints(vector) {
 		var sum = VVector3v(0, 0, 0);
 
 		for (var i in vector.fixheadsum) {
+			if (!vector.fixheadsum.hasOwnProperty(i)) {
+				continue;
+			}
+
 			var term_vector = run_vectors[vector.fixheadsum[i]];
 			if (!term_vector)
 				console.error("Couldn't find head vector: " + vector.fixheadsum[i]);
@@ -1462,6 +1487,10 @@ function render() {
 
 	// Handle animations
 	for (var k in run_vectors) {
+		if (!run_vectors.hasOwnProperty(k)) {
+			continue;
+		}
+
 		var vector = run_vectors[k];
 
 		if (vector.kill) {
@@ -1475,7 +1504,7 @@ function render() {
 				parentTransform.remove(vector.vector_handle);
 				parentTransform.remove(vector.vector_base);
 
-				delete run_vectors[k]; // TODO: Can I do this in a loop over run_vectors?
+				delete run_vectors[k];
 				continue;
 			}
 		} else {
@@ -1571,7 +1600,7 @@ function render() {
 			}
 		}
 
-		if (vector.name_label != undefined && vector.name_label != null) {
+		if (vector.name_label !== undefined && vector.name_label !== null) {
 			var scale = VVector3v(1, 0, 0).multiplyScalar(vector.name_label.text_size);
 			vector.name_label.position.copy(
 				VVector3(vector.v1)
