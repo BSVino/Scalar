@@ -99,18 +99,33 @@ Scalang.Lex._get_basic_token = function() {
 Scalang.Lex._is_identifier_first = function(char) {
 	scalar_assert(typeof char === "string", "Bad argument");
 
+	var codepoint = char.codePointAt(0);
+	var codepoint0 = "0".codePointAt(0);
+	var codepoint9 = "9".codePointAt(0);
+
+	// Identifiers can't start with numbers.
+	if (codepoint >= codepoint0 && codepoint <= codepoint9) {
+		return false;
+	}
+
+	return this._is_identifier(char);
+}
+
+Scalang.Lex._is_identifier = function(char) {
+	scalar_assert(typeof char === "string", "Bad argument");
+
+	// Nonprintable characters.
+	var codepoint = char.codePointAt(0);
+	if (codepoint <= 32 || (codepoint >= 127 && codepoint <= 159)) {
+		return false;
+	}
+
 	// If it's a token it's not an identifier
 	if (this._get_basic_token() != Scalang.Lex.tokens.None) {
 		return false;
 	}
 
 	return !this._is_whitespace(char);
-}
-
-Scalang.Lex._is_identifier = function(char) {
-	scalar_assert(typeof char === "string", "Bad argument");
-
-	return this._is_identifier_first(char);
 }
 
 Scalang.Lex._peek_char = function() {
@@ -176,6 +191,11 @@ Scalang.Parse.parse = function(code) {
 	var i = 0;
 
 	while (next.type !== Scalang.Lex.tokens.EOF) {
+		if (next.type === Scalang.Lex.tokens.None) {
+			// TODO: Print error.
+			return false;
+		}
+
 		scalar_print(next.type + ": " + next.data);
 		Scalang.Lex.eat(Scalang.Lex.peek().type);
 		next = Scalang.Lex.peek();
