@@ -6,6 +6,12 @@ Scalang.Parse = {
 
 		obj.None = i++;
 		obj.Global = i++;
+		obj.FunctionDefinition = i++;
+		obj.Arguments = i++;
+		obj.Block = i++;
+		obj.Statement = i++;
+		obj.ReturnStatement = i++;
+		obj.Expression = i++;
 
 		return obj;
 	}()),
@@ -113,7 +119,7 @@ Scalang.Lex._get_basic_token = function() {
 				break;
 			}
 
-			if (this._code[this._lex_position+n] != this.token_strings[k][n]) {
+			if (this._code[this._lex_position+n] !== this.token_strings[k][n]) {
 				match = false;
 				break;
 			}
@@ -123,7 +129,7 @@ Scalang.Lex._get_basic_token = function() {
 			continue;
 		}
 
-		if (longest == -1 || this.token_strings[k].length > this.token_strings[longest].length) {
+		if (longest === -1 || this.token_strings[k].length > this.token_strings[longest].length) {
 			longest = k;
 		}
 	}
@@ -164,7 +170,7 @@ Scalang.Lex._is_identifier = function(char) {
 	}
 
 	// If it's a token it's not an identifier
-	if (this._get_basic_token() != Scalang.Lex.tokens.None) {
+	if (this._get_basic_token() !== Scalang.Lex.tokens.None) {
 		return false;
 	}
 
@@ -182,7 +188,7 @@ Scalang.Lex._peek_char = function() {
 Scalang.Lex._next_char = function() {
 	let char = this._peek_char();
 
-	if (char == "\n") {
+	if (char === "\n") {
 		this._lex_line++;
 		this._lex_line_start = this._lex_position;
 	}
@@ -251,64 +257,154 @@ Scalang.Lex._next_token = function() {
 	return;
 };
 
+Scalang.Parse.Nodes = {};
+
+Scalang.Parse.Nodes._AstNode = function(type) {
+	Scalar.assert_arg(type, "number");
+
+	this._object_type = "Scalang.Parse.Nodes._AstNode";
+	this._type = type;
+};
+
+Scalang.Parse.Nodes.Global = function() {
+	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Global);
+
+	this._object_type = "Scalang.Parse.Nodes.Global";
+	this._objects = []; // List of other AST nodes
+}
+
+Scalang.Parse.Nodes.Arguments = function() {
+	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Arguments);
+
+	this._object_type = "Scalang.Parse.Nodes.Arguments";
+}
+
+Scalang.Parse.Nodes.FunctionDefinition = function() {
+	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.FunctionDefinition);
+
+	this._object_type = "Scalang.Parse.Nodes.FunctionDefinition";
+
+	this._name = {}; // Scalang.Lex.Token
+	this._arguments = {}; // Scalang.Parse.Nodes.Arguments
+	this._block = {}; // Scalang.Parse.Nodes.Block
+}
+
+Scalang.Parse.Nodes.Statement = function() {
+	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Statement);
+
+	this._object_type = "Scalang.Parse.Nodes.Statement";
+}
+
+Scalang.Parse.Nodes.Block = function() {
+	this.prototype = new Scalang.Parse.Nodes.Statement();
+
+	this._object_type = "Scalang.Parse.Nodes.Block";
+
+	this._statements = [] // Scalang.Parse.Nodes.Statement
+}
+
+Scalang.Parse.Nodes.ReturnStatement = function() {
+	this.prototype = new Scalang.Parse.Nodes.Statement();
+
+	this._object_type = "Scalang.Parse.Nodes.ReturnStatement";
+
+	this._expression = {}; // Scalang.Parse.Nodes.Expression
+}
+
+Scalang.Parse.Nodes.Expression = function() {
+	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Expression);
+
+	this._object_type = "Scalang.Parse.Nodes.Expression";
+
+	this._token = {}; // Temporary
+}
+
 // ( NumericLiteral )
 Scalang.Parse._parse_expression = function() {
 	let Lex = Scalang.Lex;
+	let Nodes = Scalang.Parse.Nodes;
+
+	let expression = new Nodes.Expression();
+
+	expression._token = Lex.peek();
 
 	this._eat(Lex.tokens.NumericLiteral);
+
+	return expression;
 }
 
 // ( Return expression ";" ) 
 Scalang.Parse._parse_statement = function() {
 	let Lex = Scalang.Lex;
+	let Nodes = Scalang.Parse.Nodes;
 
-	if (Lex.peek().type == Lex.tokens.Return) {
+	if (Lex.peek().type === Lex.tokens.Return) {
+		let return_statement = new Nodes.ReturnStatement();
+
 		this._eat(Lex.tokens.Return);
-		this._parse_expression();
+		return_statement._expression = this._parse_expression();
 		this._eat(Lex.tokens.Semicolon);
-		return true;
+
+		return return_statement;
 	} else {
-		return false;
+		Scalang.assert(false, "Unimplemented");
+		return null;
 	}
 }
 
 // "{" { statement } "}"
 Scalang.Parse._parse_block = function() {
 	let Lex = Scalang.Lex;
+	let Nodes = Scalang.Parse.Nodes;
+
+	let block = new Nodes.Block();
 
 	this._eat(Lex.tokens.OpenCurly);
 
 	while (Lex.peek().type !== Lex.tokens.CloseCurly) {
-		this._parse_statement();
+		block._statements.push(this._parse_statement());
 	}
 
 	this._eat(Lex.tokens.CloseCurly);
+
+	return block;
 }
 
 // "(" [] ")"
 Scalang.Parse._parse_function_arguments = function() {
 	let Lex = Scalang.Lex;
+	let Nodes = Scalang.Parse.Nodes;
+
+	let arguments = new Nodes.Arguments();
 
 	this._eat(Lex.tokens.OpenParen);
 	this._eat(Lex.tokens.CloseParen);
+
+	return arguments;
 }
 
 // { Identifier "::" (function_arguments block) }
 Scalang.Parse._parse_global = function(node) {
-	Scalar.assert_arg_object(node, "AstNode");
+	Scalar.assert_arg_object(node, "Scalang.Parse.Nodes.Global");
 
 	let Lex = Scalang.Lex;
+	let Nodes = Scalang.Parse.Nodes;
 
-	while (Lex.peek().type == Lex.tokens.Identifier) {
+	while (Lex.peek().type === Lex.tokens.Identifier) {
 		let identifier = Lex.peek();
 
 		this._eat(Lex.tokens.Identifier);
 
 		this._eat(Lex.tokens.StaticDeclare);
 
-		if (Lex.peek().type == Lex.tokens.OpenParen) {
-			this._parse_function_arguments();
-			this._parse_block();
+		if (Lex.peek().type === Lex.tokens.OpenParen) {
+			let function_definition = new Nodes.FunctionDefinition();
+
+			function_definition._name = identifier;
+			function_definition._arguments = this._parse_function_arguments();
+			function_definition._block = this._parse_block();
+
+			node._objects.push(function_definition);
 		} else {
 			Scalar.assert(false, "Unimplemented");
 		}
@@ -341,14 +437,7 @@ Scalang.Parse._initialize = function(error) {
 
 	this._error = error;
 
-	this._AstNode = function(type) {
-		Scalar.assert_arg(type, "number");
-
-		this._object_type = "AstNode";
-		this._type = type;
-	};
-
-	this._ast = new this._AstNode(Scalang.Parse.nodes.Global);
+	this._ast = new Scalang.Parse.Nodes.Global();
 }
 
 Scalang.Parse.parse = function(code) {
@@ -361,6 +450,8 @@ Scalang.Parse.parse = function(code) {
 	this._initialize(error);
 
 	this._parse_global(this._ast);
+
+	this._eat(Scalang.Lex.tokens.EOF);
 
 	return error.get_messages();
 };
