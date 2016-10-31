@@ -67,7 +67,7 @@ Scalang.Lex.Token = function(lex) {
 
 Scalang.Lex.initialize = function(code, error) {
 	Scalar.assert_arg(code, "string");
-	Scalar.assert_arg_object(error, "Scalang.Error");
+	Scalar.assert_arg_object(error, "Scalang.MessageList");
 
 	this._code = code.split('');
 	this._lex_position = 0;
@@ -319,20 +319,25 @@ Scalang.Parse._eat = function(token) {
 	Scalar.assert_arg(token, "number");
 
 	let Lex = Scalang.Lex;
+	let Error = Scalang.Error;
 
 	let old_token = Lex.peek();
 
 	let result = Lex.eat(token);
 
 	if (!result) {
-		this._error.add(old_token, "Expected token '" + Object.keys(Lex.tokens)[token] + "', but saw '" + Object.keys(Lex.tokens)[old_token] + "'.");
+		// Only display the first parsing error as the remaining errors
+		// will probably be nonsense after that.
+		if (!this._error.has_an_error()) {
+			this._error.add(Error.types.Error, old_token, "Expected token '" + Object.keys(Lex.tokens)[token] + "', but saw '" + Object.keys(Lex.tokens)[old_token] + "'.");
+		}
 	}
 
 	return result;
 }
 
 Scalang.Parse._initialize = function(error) {
-	Scalar.assert_arg_object(error, "Scalang.Error");
+	Scalar.assert_arg_object(error, "Scalang.MessageList");
 
 	this._error = error;
 
@@ -349,7 +354,7 @@ Scalang.Parse._initialize = function(error) {
 Scalang.Parse.parse = function(code) {
 	Scalar.assert_arg(code, "string");
 
-	let error = new Scalang.Error();
+	let error = new Scalang.MessageList();
 
 	Scalang.Lex.initialize(code, error);
 
@@ -357,5 +362,5 @@ Scalang.Parse.parse = function(code) {
 
 	this._parse_global(this._ast);
 
-	return error.get_errors();
+	return error.get_messages();
 };

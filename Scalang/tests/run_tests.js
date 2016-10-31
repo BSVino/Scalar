@@ -8,11 +8,11 @@ function run_tests() {
 
 	for (let k = 0; k < tests.length; k++) {
 		let filename = tests[k];
-		let errors = Scalang.Parse.parse(Scalar.read_file(filename));
-		if (errors.length > 0) {
-			for (let e = 0; e < errors.length; e++) {
+		let messages = Scalang.Parse.parse(Scalar.read_file(filename));
+		if (messages.length > 0) {
+			for (let e = 0; e < messages.length; e++) {
 				// TODO: Actual error formatting routine
-				test_print += filename + ":" + errors[e]._token.line + " [" + errors[e]._token.char_start + "-" + errors[e]._token.char_end + "] " + errors[e]._message + "\n";
+				test_print += filename + ":" + messages[e]._token.line + " [" + messages[e]._token.char_start + "-" + messages[e]._token.char_end + "] " + messages[e]._message + "\n";
 			}
 
 			test_failed = true;
