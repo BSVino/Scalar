@@ -1,21 +1,6 @@
-
-Scalang.Parse = {
-	nodes: Object.freeze(function() {
-		let obj = {};
-		let i = 0;
-
-		obj.None = i++;
-		obj.Global = i++;
-		obj.FunctionDefinition = i++;
-		obj.Arguments = i++;
-		obj.Block = i++;
-		obj.Statement = i++;
-		obj.ReturnStatement = i++;
-		obj.Expression = i++;
-
-		return obj;
-	}()),
-};
+// ====================================================================
+// LEXING =============================================================
+// ====================================================================
 
 Scalang.Lex = {
 	_object_type: "Scalang.Lex",
@@ -30,15 +15,20 @@ Scalang.Lex = {
 		obj.Identifier = i++;
 		obj.NumericLiteral = i++;
 
+		// Punctuation
 		obj.StaticDeclare = i++; // ::
 		obj.Semicolon = i++;     // ;
+		obj.Arrow = i++;         // ->
 
 		obj.OpenParen = i++;     // (
 		obj.CloseParen = i++;    // )
 		obj.OpenCurly = i++;     // {
 		obj.CloseCurly = i++;    // }
 
+		// Keywords
 		obj.Return = i++;
+
+		obj.Int = i++;
 
 		return obj;
 	}()),
@@ -49,11 +39,13 @@ Scalang.Lex = {
 		"", // NumericLiteral
 		"::",
 		";",
+		"->",
 		"(",
 		")",
 		"{",
 		"}",
 		"return",
+		"int",
 	]),
 };
 
@@ -68,7 +60,7 @@ Scalang.Lex.Token = function(lex) {
 	this.char_start = lex._lex_position - lex._lex_line_start;
 	this.char_end = this.char_start;
 
-	return this;
+	return Object.seal(this);
 };
 
 Scalang.Lex.initialize = function(code, error) {
@@ -257,6 +249,28 @@ Scalang.Lex._next_token = function() {
 	return;
 };
 
+// ====================================================================
+// PARSING ============================================================
+// ====================================================================
+
+Scalang.Parse = {
+	nodes: Object.freeze(function() {
+		let obj = {};
+		let i = 0;
+
+		obj.None = i++;
+		obj.Global = i++;
+		obj.FunctionDefinition = i++;
+		obj.Arguments = i++;
+		obj.Block = i++;
+		obj.Statement = i++;
+		obj.ReturnStatement = i++;
+		obj.Expression = i++;
+
+		return obj;
+	}()),
+};
+
 Scalang.Parse.Nodes = {};
 
 Scalang.Parse.Nodes._AstNode = function(type) {
@@ -264,6 +278,8 @@ Scalang.Parse.Nodes._AstNode = function(type) {
 
 	this._object_type = "Scalang.Parse.Nodes._AstNode";
 	this._type = type;
+
+	return Object.seal(this);
 };
 
 Scalang.Parse.Nodes.Global = function() {
@@ -271,12 +287,16 @@ Scalang.Parse.Nodes.Global = function() {
 
 	this._object_type = "Scalang.Parse.Nodes.Global";
 	this._objects = []; // List of other AST nodes
+
+	return Object.seal(this);
 }
 
 Scalang.Parse.Nodes.Arguments = function() {
 	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Arguments);
 
 	this._object_type = "Scalang.Parse.Nodes.Arguments";
+
+	return Object.seal(this);
 }
 
 Scalang.Parse.Nodes.FunctionDefinition = function() {
@@ -286,13 +306,18 @@ Scalang.Parse.Nodes.FunctionDefinition = function() {
 
 	this._name = {}; // Scalang.Lex.Token
 	this._arguments = {}; // Scalang.Parse.Nodes.Arguments
+	this._return_type = {}; // Scalang.Types.Type
 	this._block = {}; // Scalang.Parse.Nodes.Block
+
+	return Object.seal(this);
 }
 
 Scalang.Parse.Nodes.Statement = function() {
 	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Statement);
 
 	this._object_type = "Scalang.Parse.Nodes.Statement";
+
+	return Object.seal(this);
 }
 
 Scalang.Parse.Nodes.Block = function() {
@@ -301,6 +326,8 @@ Scalang.Parse.Nodes.Block = function() {
 	this._object_type = "Scalang.Parse.Nodes.Block";
 
 	this._statements = [] // Scalang.Parse.Nodes.Statement
+
+	return Object.seal(this);
 }
 
 Scalang.Parse.Nodes.ReturnStatement = function() {
@@ -309,6 +336,8 @@ Scalang.Parse.Nodes.ReturnStatement = function() {
 	this._object_type = "Scalang.Parse.Nodes.ReturnStatement";
 
 	this._expression = {}; // Scalang.Parse.Nodes.Expression
+
+	return Object.seal(this);
 }
 
 Scalang.Parse.Nodes.Expression = function() {
@@ -317,6 +346,8 @@ Scalang.Parse.Nodes.Expression = function() {
 	this._object_type = "Scalang.Parse.Nodes.Expression";
 
 	this._token = {}; // Temporary
+
+	return Object.seal(this);
 }
 
 // ( NumericLiteral )
@@ -383,7 +414,20 @@ Scalang.Parse._parse_function_arguments = function() {
 	return arguments;
 }
 
-// { Identifier "::" (function_arguments block) }
+// int
+Scalang.Parse._parse_type = function() {
+	let Lex = Scalang.Lex;
+	let Types = Scalang.Types;
+
+	let type = new Types.BasicType(Types.types.Int);
+
+	// Just one type right now!
+	this._eat(Lex.tokens.Int);
+
+	return type;
+}
+
+// { Identifier "::" (function_arguments "->" type block) }
 Scalang.Parse._parse_global = function(node) {
 	Scalar.assert_arg_object(node, "Scalang.Parse.Nodes.Global");
 
@@ -402,6 +446,10 @@ Scalang.Parse._parse_global = function(node) {
 
 			function_definition._name = identifier;
 			function_definition._arguments = this._parse_function_arguments();
+
+			this._eat(Lex.tokens.Arrow);
+
+			function_definition._return_type = this._parse_type();
 			function_definition._block = this._parse_block();
 
 			node._objects.push(function_definition);
@@ -455,3 +503,59 @@ Scalang.Parse.parse = function(code) {
 
 	return error.get_messages();
 };
+
+
+
+// ====================================================================
+// TYPES ==============================================================
+// ====================================================================
+
+Scalang.Types = {
+	types: Object.freeze(function() {
+		let obj = {};
+		let i = 0;
+
+		obj.None = i++;
+		obj.Void = i++;
+		obj.Int = i++;
+
+		return obj;
+	}()),
+};
+
+Scalang.Types._Type = function(type) {
+	Scalar.assert_arg(type, "number");
+
+	this._object_type = "Scalang.Types.Type";
+
+	this._type = type;
+
+	return Object.seal(this);
+};
+
+Scalang.Types.BasicType = function(type) {
+	Scalar.assert_arg(type, "number");
+
+	Scalar.assert(Scalang.Types.is_basic_type(type), "Require a basic type for Scalang.Types.BasicType");
+
+	this.prototype = new Scalang.Types._Type(type);
+
+	this._object_type = "Scalang.Types.BasicType";
+
+	return Object.seal(this);
+}
+
+Scalang.Types.is_basic_type = function(type) {
+	Scalar.assert_arg(type, "number");
+
+	let types = Scalang.Types.types;
+
+	switch (type) {
+	case types.None:
+	case types.Void:
+		return false;
+
+	case types.Int:
+		return true;
+	}
+}

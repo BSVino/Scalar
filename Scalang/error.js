@@ -23,6 +23,8 @@ Scalang.MessageList = function() {
 		this._type = type;
 		this._token = token;
 		this._message = message;
+
+		Object.seal(this);
 	};
 
 	this.add = function(type, token, message) {
@@ -46,5 +48,7 @@ Scalang.MessageList = function() {
 			return a || b;
 		}, false);
 	}
+
+	Object.seal(this);
 };
 
