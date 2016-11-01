@@ -50,7 +50,7 @@ Scalang.Lex = {
 };
 
 Scalang.Lex.Token = function(lex) {
-	Scalar.assert_arg_object(lex, "Scalang.Lex");
+	Scalar.assert_object(lex, "Scalang.Lex");
 
 	this._object_type = "Scalang.Lex.Token";
 
@@ -64,8 +64,8 @@ Scalang.Lex.Token = function(lex) {
 };
 
 Scalang.Lex.initialize = function(code, error) {
-	Scalar.assert_arg(code, "string");
-	Scalar.assert_arg_object(error, "Scalang.MessageList");
+	Scalar.assert_type(code, "string");
+	Scalar.assert_object(error, "Scalang.MessageList");
 
 	this._code = code.split('');
 	this._lex_position = 0;
@@ -83,7 +83,7 @@ Scalang.Lex.peek = function() {
 }
 
 Scalang.Lex.eat = function(expected) {
-	Scalar.assert_arg(expected, "number");
+	Scalar.assert_type(expected, "number");
 
 	if (expected !== this.peek().type) {
 		return false;
@@ -95,7 +95,7 @@ Scalang.Lex.eat = function(expected) {
 }
 
 Scalang.Lex._is_whitespace = function(char) {
-	Scalar.assert_arg(char, "string");
+	Scalar.assert_type(char, "string");
 
 	return char === " " || char === "\t" || char === "\r" || char === "\n";
 };
@@ -132,7 +132,7 @@ Scalang.Lex._get_basic_token = function() {
 }
 
 Scalang.Lex._is_numeric = function(char) {
-	Scalar.assert_arg(char, "string");
+	Scalar.assert_type(char, "string");
 
 	let codepoint = char.codePointAt(0);
 	let codepoint0 = "0".codePointAt(0);
@@ -142,7 +142,7 @@ Scalang.Lex._is_numeric = function(char) {
 }
 
 Scalang.Lex._is_identifier_first = function(char) {
-	Scalar.assert_arg(char, "string");
+	Scalar.assert_type(char, "string");
 
 	// Identifiers can't start with numbers.
 	if (this._is_numeric(char)) {
@@ -153,7 +153,7 @@ Scalang.Lex._is_identifier_first = function(char) {
 }
 
 Scalang.Lex._is_identifier = function(char) {
-	Scalar.assert_arg(char, "string");
+	Scalar.assert_type(char, "string");
 
 	// Nonprintable characters.
 	let codepoint = char.codePointAt(0);
@@ -274,7 +274,7 @@ Scalang.Parse = {
 Scalang.Parse.Nodes = {};
 
 Scalang.Parse.Nodes._AstNode = function(type) {
-	Scalar.assert_arg(type, "number");
+	Scalar.assert_type(type, "number");
 
 	this._object_type = "Scalang.Parse.Nodes._AstNode";
 	this._type = type;
@@ -283,71 +283,87 @@ Scalang.Parse.Nodes._AstNode = function(type) {
 };
 
 Scalang.Parse.Nodes.Global = function() {
-	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Global);
+	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Global));
 
-	this._object_type = "Scalang.Parse.Nodes.Global";
-	this._objects = []; // List of other AST nodes
+	object._object_type = "Scalang.Parse.Nodes.Global";
+	object._objects = []; // List of other AST nodes
 
-	return Object.seal(this);
+	object.visit = function(visitor) {
+		Scalar.assert_type(visitor, "function");
+
+		for (let k = 0; k < object._objects.length; k++) {
+			visitor(object._objects[k]);
+		}
+	};
+
+	return Object.seal(object);
 }
 
 Scalang.Parse.Nodes.Arguments = function() {
-	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Arguments);
+	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Arguments));
 
-	this._object_type = "Scalang.Parse.Nodes.Arguments";
+	object._object_type = "Scalang.Parse.Nodes.Arguments";
 
-	return Object.seal(this);
+	return Object.seal(object);
 }
 
 Scalang.Parse.Nodes.FunctionDefinition = function() {
-	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.FunctionDefinition);
+	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.FunctionDefinition));
 
-	this._object_type = "Scalang.Parse.Nodes.FunctionDefinition";
+	object._object_type = "Scalang.Parse.Nodes.FunctionDefinition";
 
-	this._name = {}; // Scalang.Lex.Token
-	this._arguments = {}; // Scalang.Parse.Nodes.Arguments
-	this._return_type = {}; // Scalang.Types.Type
-	this._block = {}; // Scalang.Parse.Nodes.Block
+	object._name = {}; // Scalang.Lex.Token
+	object._arguments = {}; // Scalang.Parse.Nodes.Arguments
+	object._return_type = {}; // Scalang.Static.Type
+	object._block = {}; // Scalang.Parse.Nodes.Block
 
-	return Object.seal(this);
+	object.visit_arguments = function(visitor) {
+		Scalar.assert_type(visitor, "function");
+
+		for (let k = 0; k < object._arguments.length; k++) {
+			visitor(object._arguments[k]);
+		}
+	}
+
+	return Object.seal(object);
 }
 
 Scalang.Parse.Nodes.Statement = function() {
-	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Statement);
+	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Statement));
 
-	this._object_type = "Scalang.Parse.Nodes.Statement";
+	object._object_type = "Scalang.Parse.Nodes.Statement";
 
-	return Object.seal(this);
+	return Object.seal(object);
 }
 
 Scalang.Parse.Nodes.Block = function() {
-	this.prototype = new Scalang.Parse.Nodes.Statement();
+	let object = Object.create(new Scalang.Parse.Nodes.Statement());
 
-	this._object_type = "Scalang.Parse.Nodes.Block";
+	object._object_type = "Scalang.Parse.Nodes.Block";
 
-	this._statements = [] // Scalang.Parse.Nodes.Statement
+	object._statements = [] // Scalang.Parse.Nodes.Statement
 
-	return Object.seal(this);
+	return Object.seal(object);
 }
 
 Scalang.Parse.Nodes.ReturnStatement = function() {
-	this.prototype = new Scalang.Parse.Nodes.Statement();
+	let object = Object.create(new Scalang.Parse.Nodes.Statement());
 
-	this._object_type = "Scalang.Parse.Nodes.ReturnStatement";
+	object._object_type = "Scalang.Parse.Nodes.ReturnStatement";
 
-	this._expression = {}; // Scalang.Parse.Nodes.Expression
+	object._expression = {}; // Scalang.Parse.Nodes.Expression
 
-	return Object.seal(this);
+	return Object.seal(object);
 }
 
 Scalang.Parse.Nodes.Expression = function() {
-	this.prototype = new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Expression);
+	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Expression));
 
-	this._object_type = "Scalang.Parse.Nodes.Expression";
+	object._object_type = "Scalang.Parse.Nodes.Expression";
 
-	this._token = {}; // Temporary
+	object._token = {}; // Temporary
 
-	return Object.seal(this);
+	return Object.seal(object);
 }
 
 // ( NumericLiteral )
@@ -417,9 +433,9 @@ Scalang.Parse._parse_function_arguments = function() {
 // int
 Scalang.Parse._parse_type = function() {
 	let Lex = Scalang.Lex;
-	let Types = Scalang.Types;
+	let Static = Scalang.Static;
 
-	let type = new Types.BasicType(Types.types.Int);
+	let type = new Static.BasicType(Static.types.Int);
 
 	// Just one type right now!
 	this._eat(Lex.tokens.Int);
@@ -429,7 +445,7 @@ Scalang.Parse._parse_type = function() {
 
 // { Identifier "::" (function_arguments "->" type block) }
 Scalang.Parse._parse_global = function(node) {
-	Scalar.assert_arg_object(node, "Scalang.Parse.Nodes.Global");
+	Scalar.assert_object(node, "Scalang.Parse.Nodes.Global");
 
 	let Lex = Scalang.Lex;
 	let Nodes = Scalang.Parse.Nodes;
@@ -460,7 +476,7 @@ Scalang.Parse._parse_global = function(node) {
 }
 
 Scalang.Parse._eat = function(token) {
-	Scalar.assert_arg(token, "number");
+	Scalar.assert_type(token, "number");
 
 	let Lex = Scalang.Lex;
 	let Error = Scalang.Error;
@@ -481,7 +497,7 @@ Scalang.Parse._eat = function(token) {
 }
 
 Scalang.Parse._initialize = function(error) {
-	Scalar.assert_arg_object(error, "Scalang.MessageList");
+	Scalar.assert_object(error, "Scalang.MessageList");
 
 	this._error = error;
 
@@ -489,7 +505,7 @@ Scalang.Parse._initialize = function(error) {
 }
 
 Scalang.Parse.parse = function(code) {
-	Scalar.assert_arg(code, "string");
+	Scalar.assert_type(code, "string");
 
 	let error = new Scalang.MessageList();
 
@@ -501,8 +517,11 @@ Scalang.Parse.parse = function(code) {
 
 	this._eat(Scalang.Lex.tokens.EOF);
 
-	return error.get_messages();
+	Scalang.Static.check(this._ast, error);
+
+	return error;
 };
+
 
 
 
@@ -510,7 +529,7 @@ Scalang.Parse.parse = function(code) {
 // TYPES ==============================================================
 // ====================================================================
 
-Scalang.Types = {
+Scalang.Static = {
 	types: Object.freeze(function() {
 		let obj = {};
 		let i = 0;
@@ -518,37 +537,48 @@ Scalang.Types = {
 		obj.None = i++;
 		obj.Void = i++;
 		obj.Int = i++;
+		obj.Function = i++;
 
 		return obj;
 	}()),
 };
 
-Scalang.Types._Type = function(type) {
-	Scalar.assert_arg(type, "number");
+Scalang.Static._Type = function(type) {
+	Scalar.assert_type(type, "number");
 
-	this._object_type = "Scalang.Types.Type";
+	this._object_type = "Scalang.Static.Type";
 
 	this._type = type;
 
 	return Object.seal(this);
 };
 
-Scalang.Types.BasicType = function(type) {
-	Scalar.assert_arg(type, "number");
+Scalang.Static.Function = function() {
+	let object = Object.create(new Scalang.Static._Type(Scalang.Static.types.Function));
 
-	Scalar.assert(Scalang.Types.is_basic_type(type), "Require a basic type for Scalang.Types.BasicType");
+	object._object_type = "Scalang.Static.Function";
+	object._arguments = []; // Scalang.Static._Type
+	object._return = {}; // Scalang.Static._Type
 
-	this.prototype = new Scalang.Types._Type(type);
-
-	this._object_type = "Scalang.Types.BasicType";
-
-	return Object.seal(this);
+	return Object.seal(object);
 }
 
-Scalang.Types.is_basic_type = function(type) {
-	Scalar.assert_arg(type, "number");
+Scalang.Static.BasicType = function(type) {
+	Scalar.assert_type(type, "number");
 
-	let types = Scalang.Types.types;
+	Scalar.assert(Scalang.Static.is_basic_type(type), "Require a basic type for Scalang.Static.BasicType");
+
+	let object = Object.create(new Scalang.Static._Type(type));
+
+	object._object_type = "Scalang.Static.BasicType";
+
+	return Object.seal(object);
+}
+
+Scalang.Static.is_basic_type = function(type) {
+	Scalar.assert_type(type, "number");
+
+	let types = Scalang.Static.types;
 
 	switch (type) {
 	case types.None:
@@ -558,4 +588,115 @@ Scalang.Types.is_basic_type = function(type) {
 	case types.Int:
 		return true;
 	}
+}
+
+Scalang.Static.SymbolTable = function() {
+	let object = new Object();
+
+	object._object_type = "Scalang.Static.SymbolTable";
+
+	object._symbol_stack = [];
+	object._scope_stack = [];
+
+	object._scope_stack.push(0);
+
+	object._Symbol = function(name, object) {
+		Scalar.assert_type(name, "string");
+		Scalar.assert_object(object, "Scalang.Parse.Nodes._AstNode");
+
+		let symbol = new Object();
+
+		symbol._object_type = "Scalang.Static._Symbol";
+
+		symbol.name = name;
+		symbol.object = object;
+
+		return Object.seal(symbol);
+	};
+
+	object.find = function(name, highest_stack_only) {
+		Scalar.assert_type(name, "string");
+		if (highest_stack_only === undefined)
+		{
+			highest_stack_only = true;
+		}
+		else
+		{
+			Scalar.assert_type(highest_stack_only, "boolean");
+		}
+
+		for (let k = 0; k < object._symbol_stack.length; k++) {
+			// Reverse the index.
+			let index = object._symbol_stack.length - k - 1;
+
+			if (object._symbol_stack[k].name === name) {
+				return object._symbol_stack[k].object;
+			}
+		}
+
+		return null;
+	};
+
+	object.push_symbol = function(name, node) {
+		Scalar.assert_type(name, "string");
+		Scalar.assert_object(node, "Scalang.Parse.Nodes._AstNode");
+
+		Scalar.assert(!object.find(name, true), "Pushing a duplicate node to the symbol stack");
+
+		object._symbol_stack.push(new object._Symbol(name, node));
+	};
+
+	object.push_frame = function() {
+		object._scope_stack.push(object._symbol_stack.length);
+	}
+
+	object.pop_frame = function() {
+		let first_symbol_in_stack = object._scope_stack[object._scope_stack.length-1];
+
+		while (object._symbol_stack.length >= first_symbol_in_stack) {
+			object._symbol_stack.pop();
+		}
+
+		object._scope_stack.pop();
+	}
+
+	return Object.seal(object);
+};
+
+Scalang.Static.check = function(ast, messages) {
+	Scalar.assert_object(ast, "Scalang.Parse.Nodes.Global");
+
+	let Symbol = function(name, definition_ast_node) {
+		Scalar.assert_type(name, "string");
+		Scalar.assert_object(definition_ast_node, "Scalang.Parse.Nodes._AstNode");
+
+		this.name = name;
+		this.definition = definition_ast_node;
+
+		return Object.seal(this);
+	}
+
+	let ast_types = new WeakMap();
+	let symbol_table = new Scalang.Static.SymbolTable();
+
+	// Add all global objects to the symbol table.
+	ast.visit(function(global) {
+		Scalar.assert_object(global, "Scalang.Parse.Nodes.FunctionDefinition");
+
+		let function_type = new Scalang.Static.Function();
+
+		global.visit_arguments(function(argument) {
+			Scalar.assert(false, "Unimplemented");
+		});
+
+		function_type._return = global._return_type;
+
+		ast_types.set(global, function_type);
+
+		if (symbol_table.find(global._name.data) !== null) {
+			messages.add(Scalang.Error.types.Error, global._name, "Duplicate object name at the global scope");
+		} else {
+			symbol_table.push_symbol(global._name.data, global);
+		}
+	});
 }

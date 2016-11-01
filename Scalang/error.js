@@ -11,44 +11,48 @@ Scalang.Error = {
 };
 
 Scalang.MessageList = function() {
-	this._object_type = "Scalang.MessageList";
+	let object = new Object();
 
-	this._messages = [];
+	object._object_type = "Scalang.MessageList";
 
-	this._ErrorInfo = function(type, token, message) {
-		Scalar.assert_arg(type, "number");
-		Scalar.assert_arg_object(token, "Scalang.Lex.Token");
-		Scalar.assert_arg(message, "string");
+	object._messages = [];
 
-		this._type = type;
-		this._token = token;
-		this._message = message;
+	object._ErrorInfo = function(type, token, message) {
+		Scalar.assert_type(type, "number");
+		Scalar.assert_object(token, "Scalang.Lex.Token");
+		Scalar.assert_type(message, "string");
 
-		Object.seal(this);
+		let error_info = new Object();
+
+		error_info._type = type;
+		error_info._token = token;
+		error_info._message = message;
+
+		return Object.seal(error_info);
 	};
 
-	this.add = function(type, token, message) {
-		Scalar.assert_arg(type, "number");
-		Scalar.assert_arg_object(token, "Scalang.Lex.Token");
-		Scalar.assert_arg(message, "string");
+	object.add = function(type, token, message) {
+		Scalar.assert_type(type, "number");
+		Scalar.assert_object(token, "Scalang.Lex.Token");
+		Scalar.assert_type(message, "string");
 
-		this._messages.push(new this._ErrorInfo(type, token, message));
+		object._messages.push(new object._ErrorInfo(type, token, message));
 	};
 
-	this.get_messages = function() {
-		return this._messages;
+	object.get_messages = function() {
+		return object._messages;
 	}
 
-	this.has_an_error = function() {
+	object.has_an_error = function() {
 		let Error = Scalang.Error;
 
-		return this._messages.map(function(a) {
+		return object._messages.map(function(a) {
 			return a._type == Error.types.Error;
 		}).reduce(function(a, b) {
 			return a || b;
 		}, false);
 	}
 
-	Object.seal(this);
+	return Object.seal(object);
 };
 
