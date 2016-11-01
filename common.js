@@ -6,6 +6,11 @@ Scalar.assert_type = function(object, type) {
 
 // This uses my own bad homemade RTTI system to do type checking.
 Scalar.assert_object = function(object, type) {
+	if (!object) {
+		Scalar.assert(false, type + " object expected, found a null object instead.");
+		return;
+	}
+
 	let search = object;
 
 	while (search) {

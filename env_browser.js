@@ -29,6 +29,8 @@ Scalar.read_file = function(file) {
 
 Scalar.assert = function(condition, message) {
 	if (!condition) {
+		Scalar.print("Assert failed. Backtrace:");
+		Scalar.print(new Error().stack);
 		throw message || "Assert failed";
 	}
 }
