@@ -10,10 +10,10 @@ Scalang.Error = {
 	}()),
 };
 
-Scalang.MessageList = function() {
+Scalang.Error.MessageList = function() {
 	let object = new Object();
 
-	object._object_type = "Scalang.MessageList";
+	object._object_type = "Scalang.Error.MessageList";
 
 	object._messages = [];
 
@@ -51,6 +51,10 @@ Scalang.MessageList = function() {
 		}).reduce(function(a, b) {
 			return a || b;
 		}, false);
+	}
+
+	object.has_no_errors = function() {
+		return !object.has_an_error();
 	}
 
 	return Object.seal(object);

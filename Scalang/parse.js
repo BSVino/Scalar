@@ -1,3 +1,30 @@
+Scalang.Program = function() {
+	let object = new Object();
+
+	object._object_type = "Scalang.Program";
+
+	object.ast = new Scalang.Parse.Nodes.Global();
+	object.type_map = new WeakMap();
+	object.messages = new Scalang.Error.MessageList();
+
+	return Object.seal(object);
+};
+
+Scalang.compile = function(code) {
+	Scalar.assert_type(code, "string");
+
+	let program = new Scalang.Program();
+
+	// Don't proceed if parsing had an error.
+	if (!Scalang.Parse.parse(code, program)) {
+		return program;
+	}
+
+	Scalang.Static.check(program);
+
+	return program;
+};
+
 // ====================================================================
 // LEXING =============================================================
 // ====================================================================
@@ -63,16 +90,16 @@ Scalang.Lex.Token = function(lex) {
 	return Object.seal(this);
 };
 
-Scalang.Lex.initialize = function(code, error) {
+Scalang.Lex.initialize = function(code, messages) {
 	Scalar.assert_type(code, "string");
-	Scalar.assert_object(error, "Scalang.MessageList");
+	Scalar.assert_object(messages, "Scalang.Error.MessageList");
 
 	this._code = code.split('');
 	this._lex_position = 0;
 	this._lex_line = 0;
 	this._lex_line_start = 0;
 
-	this._error = error;
+	this._error = messages;
 
 	// Prime the pump
 	this._next_token();
@@ -488,7 +515,7 @@ Scalang.Parse._eat = function(token) {
 	if (!result) {
 		// Only display the first parsing error as the remaining errors
 		// will probably be nonsense after that.
-		if (!this._error.has_an_error()) {
+		if (this._error.has_no_errors()) {
 			this._error.add(Error.types.Error, old_token, "Expected token '" + Object.keys(Lex.tokens)[token] + "', but saw '" + Object.keys(Lex.tokens)[old_token] + "'.");
 		}
 	}
@@ -496,30 +523,24 @@ Scalang.Parse._eat = function(token) {
 	return result;
 }
 
-Scalang.Parse._initialize = function(error) {
-	Scalar.assert_object(error, "Scalang.MessageList");
+Scalang.Parse._initialize = function(messages) {
+	Scalar.assert_object(messages, "Scalang.Error.MessageList");
 
-	this._error = error;
-
-	this._ast = new Scalang.Parse.Nodes.Global();
+	this._error = messages;
 }
 
-Scalang.Parse.parse = function(code) {
+Scalang.Parse.parse = function(code, program) {
 	Scalar.assert_type(code, "string");
 
-	let error = new Scalang.MessageList();
+	Scalang.Lex.initialize(code, program.messages);
 
-	Scalang.Lex.initialize(code, error);
+	this._initialize(program.messages);
 
-	this._initialize(error);
-
-	this._parse_global(this._ast);
+	this._parse_global(program.ast);
 
 	this._eat(Scalang.Lex.tokens.EOF);
 
-	Scalang.Static.check(this._ast, error);
-
-	return error;
+	return program.messages.has_no_errors();
 };
 
 
@@ -663,8 +684,8 @@ Scalang.Static.SymbolTable = function() {
 	return Object.seal(object);
 };
 
-Scalang.Static.check = function(ast, messages) {
-	Scalar.assert_object(ast, "Scalang.Parse.Nodes.Global");
+Scalang.Static.check = function(program) {
+	Scalar.assert_object(program, "Scalang.Program");
 
 	let Symbol = function(name, definition_ast_node) {
 		Scalar.assert_type(name, "string");
@@ -676,11 +697,10 @@ Scalang.Static.check = function(ast, messages) {
 		return Object.seal(this);
 	}
 
-	let ast_types = new WeakMap();
 	let symbol_table = new Scalang.Static.SymbolTable();
 
 	// Add all global objects to the symbol table.
-	ast.visit(function(global) {
+	program.ast.visit(function(global) {
 		Scalar.assert_object(global, "Scalang.Parse.Nodes.FunctionDefinition");
 
 		let function_type = new Scalang.Static.Function();
@@ -691,12 +711,14 @@ Scalang.Static.check = function(ast, messages) {
 
 		function_type._return = global._return_type;
 
-		ast_types.set(global, function_type);
+		program.type_map.set(global, function_type);
 
 		if (symbol_table.find(global._name.data) !== null) {
-			messages.add(Scalang.Error.types.Error, global._name, "Duplicate object name at the global scope");
+			program.messages.add(Scalang.Error.types.Error, global._name, "Duplicate object name at the global scope");
 		} else {
 			symbol_table.push_symbol(global._name.data, global);
 		}
 	});
+
+	return program.messages.has_no_errors();
 }

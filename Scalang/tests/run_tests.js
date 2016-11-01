@@ -1,7 +1,7 @@
 function run_tests() {
 	let tests = [
-		{ result: true, file: "Scalang/tests/test1.scl", },
-		{ result: false, file: "Scalang/tests/error-duplicate-global.scl", },
+		{ compile: true, file: "Scalang/tests/test1.scl", },
+		{ compile: false, file: "Scalang/tests/error-duplicate-global.scl", },
 	];
 
 	let test_failed = false;
@@ -17,10 +17,11 @@ function run_tests() {
 
 	for (let k = 0; k < tests.length; k++) {
 		let filename = tests[k].file;
-		let message_list = Scalang.Parse.parse(Scalar.read_file(filename));
+		let program = Scalang.compile(Scalar.read_file(filename));
+		let message_list = program.messages;
 		let messages = message_list.get_messages();
 
-		if (message_list.has_an_error() !== tests[k].result) {
+		if (message_list.has_an_error() !== tests[k].compile) {
 			continue;
 		}
 
