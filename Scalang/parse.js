@@ -356,7 +356,13 @@ Scalang.Parse.Nodes.FunctionDefinition = function() {
 		for (let k = 0; k < object._arguments.length; k++) {
 			visitor(object._arguments[k]);
 		}
-	}
+	};
+
+	object.visit_block_statements = function(visitor) {
+		Scalar.assert_type(visitor, "function");
+
+		object._block.visit_statements(visitor);
+	};
 
 	return Object.seal(object);
 }
@@ -376,6 +382,14 @@ Scalang.Parse.Nodes.Block = function() {
 
 	object._statements = [] // Scalang.Parse.Nodes.Statement
 
+	object.visit_statements = function(visitor) {
+		Scalar.assert_type(visitor, "function");
+
+		for (let k = 0; k < object._statements.length; k++) {
+			visitor(object._statements[k]);
+		}
+	};
+
 	return Object.seal(object);
 }
 
@@ -385,6 +399,10 @@ Scalang.Parse.Nodes.ReturnStatement = function() {
 	object._object_type = "Scalang.Parse.Nodes.ReturnStatement";
 
 	object._expression = {}; // Scalang.Parse.Nodes.Expression
+
+	object.get_expression = function() {
+		return object._expression;
+	}
 
 	return Object.seal(object);
 }
@@ -685,8 +703,19 @@ Scalang.Static.SymbolTable = function() {
 	return Object.seal(object);
 };
 
+Scalang.Static._resolve_type_of_expression = function(expression) {
+	Scalar.assert_object(expression, "Scalang.Parse.Nodes.Expression");
+
+	let Static = Scalang.Static;
+
+	// TODO: This for real.
+	return new Static.BasicType(Static.types.Int);
+}
+
 Scalang.Static.check = function(program) {
 	Scalar.assert_object(program, "Scalang.Program");
+
+	let Static = Scalang.Static;
 
 	let Symbol = function(name, definition_ast_node) {
 		Scalar.assert_type(name, "string");
@@ -719,6 +748,19 @@ Scalang.Static.check = function(program) {
 		} else {
 			symbol_table.push_symbol(global._name.data, global);
 		}
+	});
+
+	program.ast.visit(function(global) {
+		Scalar.assert_object(global, "Scalang.Parse.Nodes.FunctionDefinition");
+
+		global.visit_block_statements(function(statement) {
+			if (Scalar.is_object_type(statement, "Scalang.Parse.Nodes.ReturnStatement")) {
+				let type = Static._resolve_type_of_expression(statement.get_expression());
+				program.type_map.set(statement.get_expression(), type);
+			} else {
+				Scalar.assert(false, "Unrecognized statement type");
+			}
+		});
 	});
 
 	return program.messages.has_no_errors();
