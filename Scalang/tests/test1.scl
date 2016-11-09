@@ -1,3 +1,4 @@
 main :: () -> int {
+	a : int = 12;
 	return 12;
 }

@@ -24,6 +24,11 @@ Scalang.compile = function(code) {
 
 	Scalang.Static.check(program);
 
+	// Don't proceed if static checking had an error.
+	if (program.messages.has_an_error()) {
+		return program;
+	}
+
 	return program;
 };
 
@@ -45,8 +50,10 @@ Scalang.Lex = {
 		obj.NumericLiteral = i++;
 
 		// Punctuation
-		obj.StaticDeclare = i++; // ::
+		obj.Colon = i++;         // :
+		obj.DoubleColon = i++;   // ::
 		obj.Semicolon = i++;     // ;
+		obj.Equals = i++;        // =
 		obj.Arrow = i++;         // ->
 
 		obj.OpenParen = i++;     // (
@@ -66,8 +73,10 @@ Scalang.Lex = {
 		"", // EOF
 		"", // Identifier
 		"", // NumericLiteral
+		":",
 		"::",
 		";",
+		"=",
 		"->",
 		"(",
 		")",
@@ -298,7 +307,9 @@ Scalang.Parse = {
 		obj.Block = i++;
 		obj.Statement = i++;
 		obj.ReturnStatement = i++;
+		obj.DeclareStatement = i++;
 		obj.Expression = i++;
+		obj.BinaryExpression = i++;
 
 		return obj;
 	}()),
@@ -407,12 +418,38 @@ Scalang.Parse.Nodes.ReturnStatement = function() {
 	return Object.seal(object);
 }
 
+Scalang.Parse.Nodes.DeclareStatement = function() {
+	let object = Object.create(new Scalang.Parse.Nodes.Statement());
+
+	object._object_type = "Scalang.Parse.Nodes.DeclareStatement";
+
+	object._expression = {}; // Scalang.Parse.Nodes.Expression
+
+	object.get_expression = function() {
+		return object._expression;
+	}
+
+	return Object.seal(object);
+}
+
 Scalang.Parse.Nodes.Expression = function() {
 	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Expression));
 
 	object._object_type = "Scalang.Parse.Nodes.Expression";
 
 	object._token = {}; // Temporary
+
+	return Object.seal(object);
+}
+
+Scalang.Parse.Nodes.BinaryExpression = function() {
+	let object = Object.create(new Scalang.Parse.Nodes.Expression());
+
+	object._object_type = "Scalang.Parse.Nodes.BinaryExpression";
+
+	object._left = {}; // Scalang.Parse.Nodes.Expression
+	object._operator = {}; // Scalang.Lex.Token
+	object._right = {}; // Scalang.Parse.Nodes.Expression
 
 	return Object.seal(object);
 }
@@ -449,7 +486,30 @@ Scalang.Parse.Parser = function(lexer, messages) {
 
 			return return_statement;
 		} else {
-			Scalang.assert(false, "Unimplemented");
+			this._eat(Lex.tokens.Identifier);
+
+			if (this._lexer.peek().type === Lex.tokens.Colon) {
+				let declare_statement = new Nodes.DeclareStatement();
+
+				// Variable declaration
+				this._eat(Lex.tokens.Colon);
+				this._parse_type();
+
+				if (this._lexer.peek().type == Lex.tokens.Equals) {
+					this._eat(Lex.tokens.Equals);
+
+					declare_statement._expression = this._parse_expression();
+				} else {
+					declare_statement._expression = null;
+				}
+
+				this._eat(Lex.tokens.Semicolon);
+
+				return declare_statement;
+			} else {
+				// Expression
+				Scalar.assert(false, "Unimplemented");
+			}
 			return null;
 		}
 	}
@@ -510,7 +570,7 @@ Scalang.Parse.Parser = function(lexer, messages) {
 
 			this._eat(Lex.tokens.Identifier);
 
-			this._eat(Lex.tokens.StaticDeclare);
+			this._eat(Lex.tokens.DoubleColon);
 
 			if (Lex.peek().type === Lex.tokens.OpenParen) {
 				let function_definition = new Nodes.FunctionDefinition();
@@ -755,6 +815,9 @@ Scalang.Static.check = function(program) {
 
 		global.visit_block_statements(function(statement) {
 			if (Scalar.is_object_type(statement, "Scalang.Parse.Nodes.ReturnStatement")) {
+				let type = Static._resolve_type_of_expression(statement.get_expression());
+				program.type_map.set(statement.get_expression(), type);
+			} else if (Scalar.is_object_type(statement, "Scalang.Parse.Nodes.DeclareStatement")) {
 				let type = Static._resolve_type_of_expression(statement.get_expression());
 				program.type_map.set(statement.get_expression(), type);
 			} else {
