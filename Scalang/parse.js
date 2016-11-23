@@ -53,13 +53,19 @@ Scalang.Lex = {
 		obj.Colon = i++;         // :
 		obj.DoubleColon = i++;   // ::
 		obj.Semicolon = i++;     // ;
-		obj.Equals = i++;        // =
 		obj.Arrow = i++;         // ->
 
 		obj.OpenParen = i++;     // (
 		obj.CloseParen = i++;    // )
 		obj.OpenCurly = i++;     // {
 		obj.CloseCurly = i++;    // }
+
+		// Operators
+		obj.Equals = i++;        // =
+		obj.Plus = i++;          // +
+		obj.Minus = i++;         // -
+		obj.Star = i++;          // *
+		obj.Slash = i++;         // /
 
 		// Keywords
 		obj.Return = i++;
@@ -76,12 +82,16 @@ Scalang.Lex = {
 		":",
 		"::",
 		";",
-		"=",
 		"->",
 		"(",
 		")",
 		"{",
 		"}",
+		"=",
+		"+",
+		"-",
+		"*",
+		"/",
 		"return",
 		"int",
 	]),
@@ -308,6 +318,7 @@ Scalang.Parse = {
 		obj.Statement = i++;
 		obj.ReturnStatement = i++;
 		obj.DeclareStatement = i++;
+		obj.ExpressionStatement = i++;
 		obj.Expression = i++;
 		obj.BinaryExpression = i++;
 
@@ -432,12 +443,24 @@ Scalang.Parse.Nodes.DeclareStatement = function() {
 	return Object.seal(object);
 }
 
+Scalang.Parse.Nodes.ExpressionStatement = function() {
+	let object = Object.create(new Scalang.Parse.Nodes.Statement());
+
+	object._object_type = "Scalang.Parse.Nodes.ExpressionStatement";
+
+	object._expression = {}; // Scalang.Parse.Nodes.Expression
+
+	object.get_expression = function() {
+		return object._expression;
+	}
+
+	return Object.seal(object);
+}
+
 Scalang.Parse.Nodes.Expression = function() {
 	let object = Object.create(new Scalang.Parse.Nodes._AstNode(Scalang.Parse.nodes.Expression));
 
 	object._object_type = "Scalang.Parse.Nodes.Expression";
-
-	object._token = {}; // Temporary
 
 	return Object.seal(object);
 }
@@ -454,22 +477,121 @@ Scalang.Parse.Nodes.BinaryExpression = function() {
 	return Object.seal(object);
 }
 
+Scalang.Parse.Nodes.Terminal = function() {
+	let object = Object.create(new Scalang.Parse.Nodes.Expression());
+
+	object._object_type = "Scalang.Parse.Nodes.Terminal";
+
+	object._token = {}; // Scalang.Lex.Token
+
+	return Object.seal(object);
+}
+
 Scalang.Parse.Parser = function(lexer, messages) {
 	Scalar.assert_object(lexer, "Scalang.Lex.Lexer");
 	Scalar.assert_object(messages, "Scalang.Error.MessageList");
 
-	// ( NumericLiteral )
-	this._parse_expression = function() {
+	this._is_operator = function(token) {
+		Scalar.assert_type(token, "number");
+
+		let Lex = Scalang.Lex;
+
+		switch (token) {
+		case Lex.tokens.Equals:
+		case Lex.tokens.Plus:
+		case Lex.tokens.Minus:
+		case Lex.tokens.Star:
+		case Lex.tokens.Slash:
+		{
+			return true;
+		}
+		}
+
+		return false;
+	}
+
+	this._get_operator_precedence = function(token) {
+		Scalar.assert_type(token, "number");
+
+		let Lex = Scalang.Lex;
+
+		switch (token) {
+		case Lex.tokens.Equals: {
+			return 1;
+		} break;
+
+		case Lex.tokens.Plus:
+		case Lex.tokens.Minus:
+		{
+			return 2;
+		} break;
+
+		case Lex.tokens.Star:
+		case Lex.tokens.Slash:
+		{
+			return 3;
+		} break;
+		}
+
+		return -1;
+	}
+
+	// ( Identifier | NumericLiteral )
+	this._parse_terminal = function() {
 		let Lex = Scalang.Lex;
 		let Nodes = Scalang.Parse.Nodes;
 
-		let expression = new Nodes.Expression();
+		let terminal = new Nodes.Terminal();
 
-		expression._token = this._lexer.peek();
+		if (this._lexer.peek().type === Lex.tokens.Identifier) {
+			terminal._token = this._lexer.peek();
 
-		this._eat(Lex.tokens.NumericLiteral);
+			this._eat(Lex.tokens.Identifier);
+		} else {
+			terminal._token = this._lexer.peek();
+
+			this._eat(Lex.tokens.NumericLiteral);
+		}
+
+		return terminal;
+	}
+
+	this._parse_expression_loop = function(precedence, terminal) {
+		let Lex = Scalang.Lex;
+		let Nodes = Scalang.Parse.Nodes;
+
+		if (!this._is_operator(this._lexer.peek().type)) {
+			return terminal;
+		}
+
+		let previous_expression = terminal;
+		let expression = terminal;
+
+		while (this._get_operator_precedence(this._lexer.peek().type) >= precedence) {
+			expression = new Nodes.BinaryExpression();
+			expression._left = previous_expression;
+
+			expression._operator = this._lexer.peek();
+
+			this._eat(this._lexer.peek().type);
+
+			expression._right = this._parse_expression(this._get_operator_precedence(expression._operator.type) + 1);
+
+			previous_expression = expression;
+		}
 
 		return expression;
+	}
+
+	// terminal { Operator expression }
+	this._parse_expression = function(precedence) {
+		if (precedence === undefined) {
+			precedence = 0;
+		}
+
+		let terminal = this._parse_terminal();
+
+		return this._parse_expression_loop(precedence, terminal);
 	}
 
 	// ( Return expression ";" ) 
@@ -486,6 +608,9 @@ Scalang.Parse.Parser = function(lexer, messages) {
 
 			return return_statement;
 		} else {
+			let terminal = new Nodes.Terminal();
+			terminal._token = this._lexer.peek();
+
 			this._eat(Lex.tokens.Identifier);
 
 			if (this._lexer.peek().type === Lex.tokens.Colon) {
@@ -507,8 +632,17 @@ Scalang.Parse.Parser = function(lexer, messages) {
 
 				return declare_statement;
 			} else {
-				// Expression
-				Scalar.assert(false, "Unimplemented");
+				if (this._is_operator(this._lexer.peek().type)) {
+					let expression_statement = new Nodes.ExpressionStatement();
+
+					expression_statement._expression = this._parse_expression_loop(0, terminal);
+
+					this._eat(Lex.tokens.Semicolon);
+
+					return expression_statement;
+				} else {
+					Scalar.assert(false, "Unimplemented");
+				}
 			}
 			return null;
 		}
@@ -604,7 +738,7 @@ Scalang.Parse.Parser = function(lexer, messages) {
 			// Only display the first parsing error as the remaining errors
 			// will probably be nonsense after that.
 			if (this._error.has_no_errors()) {
-				this._error.add(Error.types.Error, old_token, "Expected token '" + Object.keys(Lex.tokens)[token] + "', but saw '" + Object.keys(Lex.tokens)[old_token] + "'.");
+				this._error.add(Error.types.Error, old_token, "Expected token '" + Object.keys(Lex.tokens)[token] + "', but saw '" + Object.keys(Lex.tokens)[old_token.type] + "'.");
 			}
 		}
 
@@ -814,12 +948,14 @@ Scalang.Static.check = function(program) {
 		Scalar.assert_object(global, "Scalang.Parse.Nodes.FunctionDefinition");
 
 		global.visit_block_statements(function(statement) {
+			Scalar.assert_object(statement, "Scalang.Parse.Nodes.Statement");
 			if (Scalar.is_object_type(statement, "Scalang.Parse.Nodes.ReturnStatement")) {
 				let type = Static._resolve_type_of_expression(statement.get_expression());
 				program.type_map.set(statement.get_expression(), type);
 			} else if (Scalar.is_object_type(statement, "Scalang.Parse.Nodes.DeclareStatement")) {
 				let type = Static._resolve_type_of_expression(statement.get_expression());
 				program.type_map.set(statement.get_expression(), type);
+			} else if (Scalar.is_object_type(statement, "Scalang.Parse.Nodes.ExpressionStatement")) {
 			} else {
 				Scalar.assert(false, "Unrecognized statement type");
 			}

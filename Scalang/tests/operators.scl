@@ -1,0 +1,5 @@
+main :: () -> int {
+	a : int = 12 + 46 * a - 5 / b;
+	a = 12 + 5;
+	return a;
+}

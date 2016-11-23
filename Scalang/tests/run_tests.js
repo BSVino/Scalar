@@ -1,5 +1,6 @@
 function run_tests() {
 	let tests = [
+		{ compile: true, file: "Scalang/tests/operators.scl", },
 		{ compile: true, file: "Scalang/tests/test1.scl", },
 		{ compile: false, file: "Scalang/tests/error-duplicate-global.scl", },
 	];
@@ -25,14 +26,15 @@ function run_tests() {
 			continue;
 		}
 
-		test_print += "Test '" + filename + " " + succeededfailed(!message_list.has_an_error()) + " when it should have " + succeededfailed(tests[k].result) + ".\n";
+		test_print += "Test '" + filename + " " + succeededfailed(!message_list.has_an_error()) + " when it should have " + succeededfailed(tests[k].compile) + ".\n";
 
 		test_failed = true;
 
 		if (messages.length > 0) {
 			for (let e = 0; e < messages.length; e++) {
 				// TODO: Actual error formatting routine
-				test_print += filename + ":" + messages[e]._token.line + " [" + messages[e]._token.char_start + "-" + messages[e]._token.char_end + "] " + messages[e]._message + "\n";
+				let print_line = messages[e]._token.line + 1;
+				test_print += filename + ":" + print_line + " [" + messages[e]._token.char_start + "-" + messages[e]._token.char_end + "] " + messages[e]._message + "\n";
 			}
 
 		}
